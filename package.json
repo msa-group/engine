@@ -8,6 +8,10 @@
     "dev": "rspack serve",
     "build": "tsc"
   },
+	"publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  },
   "module": "lib/index.js",
   "files": [
     "lib"
@@ -32,8 +36,5 @@
   "repository": {
     "type": "git",
     "url": "http://gitlab.alibaba-inc.com/msa/engine.git"
-  },
-  "publishConfig": {
-    "registry": "https://registry.anpm.alibaba-inc.com"
   }
 }
