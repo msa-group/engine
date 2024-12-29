@@ -1,0 +1,39 @@
+{
+  "name": "msa-engine",
+  "version": "0.0.1",
+  "description": "",
+  "main": "lib/index.js",
+  "scripts": {
+    "test": "jest --watch",
+    "dev": "rspack serve",
+    "build": "tsc"
+  },
+  "module": "lib/index.js",
+  "files": [
+    "lib"
+  ],
+  "author": "kapla",
+  "license": "MIT",
+  "dependencies": {
+    "handlebars": "^4.7.8",
+    "js-yaml": "^4.1.0",
+    "radash": "^12.1.0"
+  },
+  "devDependencies": {
+    "@rspack/cli": "^1.1.8",
+    "@rspack/core": "^1.1.8",
+    "@swc/cli": "^0.5.2",
+    "@swc/core": "^1.10.1",
+    "@swc/jest": "^0.2.37",
+    "@types/jest": "^29.5.14",
+    "jest": "^29.7.0",
+    "typescript": "^5.7.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "http://gitlab.alibaba-inc.com/msa/engine.git"
+  },
+  "publishConfig": {
+    "registry": "https://registry.anpm.alibaba-inc.com"
+  }
+}

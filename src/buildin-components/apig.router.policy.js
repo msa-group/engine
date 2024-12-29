@@ -1,0 +1,11 @@
+export default `Policy:
+  Type: ALIYUN::APIG::Policy
+  MsaResource: true
+  Properties:
+    GatewayId: {{Parameters.GatewayId}}
+    EnvironmentId: {{Parameters.EnvironmentId}}
+    PolicyClassName: {{Parameters.PolicyClassName}}
+    PolicyConfig: {{Parameters.PolicyConfig}}
+    AttachResourceIds: {{RosArray(Parameters.RouteIds)}}
+    AttachResourceType: "GatewayRoute"
+`

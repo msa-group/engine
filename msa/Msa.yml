@@ -1,0 +1,126 @@
+Parameters:
+  GatewayId:
+    Type: String
+    Default: 'gw-ct6jh0mm1hkndsftdgl0'
+  EnvironmentId:
+    Type: String
+    Default: 'env-ct6jhlmm1hkjgpp124e0'
+  Region:
+    Type: String
+    Default: 'cn-hangzhou'
+  Name:
+    Type: String
+    Default: 'nextchat-web'
+  AiApiId:
+    Type: String
+    Default: 'api-xxx'
+
+
+Composer:
+  ChatgptWeb:
+    Component: fc3
+    Properties:
+      Function:
+        CustomContainerConfig:
+          Fn::Sub:
+            - '{"Port": 3000,"Image":"registry.${Region}.aliyuncs.com/mse-micro/ai-app:chatgpt-next-web"}'
+            - Region: {{Parameters.Region}}
+        EnvironmentVariables: '{"CUSTOM_MODELS":"-all,+gpt-3.5-turbo@OpenAI,+gpt-4o@OpenAI,+gpt-4@OpenAI,+gpt-4-turbo@OpenAI,+qwen-max@OpenAI,+qwen-turbo@OpenAI,+qwen-plus@OpenAI", "OPENAI_API_KEY": "unused", "DEFAULT_MODEL":"qwen-max"}'
+    Parameters:
+      Name: {{Subfix(Parameters.Name)}}
+
+  AliyunService:
+    DependsOn: ChatgptWeb
+    Component: apig.service
+    Parameters:
+      Port: 80
+      AddressesName: {{RosOutputHostName(ChatgptWeb.HttpTrigger, "UrlIntranet")}}
+      Name: {{Subfix('AliyunService')}}
+
+  DashScopeService:
+    Component: apig.service
+    Parameters:
+      Port: 443
+      AddressesName: dashscope.aliyuncs.com
+      Name: {{Subfix('DashScope')}}
+
+  RouteApi:
+    Component: apig.rest.api
+    Parameters:
+      ApiName: {{Subfix(Join(Parameters.Name, 'http'))}}
+
+  ChatgptWebRoute:
+    DependsOn:
+      - AliyunService
+      - DashScopeService
+      - RouteApi
+    Component: apig.route
+    Operation:
+      ApiId: {{RosOutput(RouteApi, "HttpApiId")}}
+      Name: {{Join(Parameters.Name, 'index')}}
+      Path: 'Prefix /'
+      Scene: MultiServiceByRatio
+      Services:
+        - ServiceId: {{RosOutput(AliyunService, "ServiceId")}}
+          Protocol: HTTP
+          Weight: 50
+        - ServiceId: {{RosOutput(DashScopeService, "ServiceId")}}
+          Protocol: HTTP
+          Weight: 50
+    Parameters:
+      HttpApiName: {{Subfix(Join(Parameters.Name, 'api'))}}
+      RouteName: {{Join(Parameters.Name, 'index')}}
+
+  HttpRewritePolicy:
+    DependsOn: ChatgptWebRoute
+    Component: apig.router.policy
+    Parameters:
+      PolicyClassName: "HttpRewrite"
+      PolicyConfig:
+        Fn::Sub:
+          - '{"pathType":"Prefix","host":"${HOST}","enable":true}'
+          - HOST: {{RosOutputHostName(ChatgptWeb.HttpTrigger, "UrlIntranet")}}
+      RouteIds:
+        - {{RosOutput(ChatgptWebRoute, "RouteId")}}
+
+  AiProxyPlugin:
+    DependsOn: ChatgptWebRoute
+    Component: apig.router.plugin
+    Parameters:
+      PluginClassId: pls-cqebrgh4ckt6ppatmprh
+      RouteIds:
+        - {{RosOutput(ChatgptWebRoute, "RouteId")}}
+      PluginConfig: |
+        provider:
+          modelMapping:
+            '*': qwen-max
+          type: qwen
+          apiTokens:
+            - sk-xxx
+        RouteIds:
+          - {{RosOutput(ChatgptWebRoute, "RouteId")}}
+
+  # RestApi:
+  #   Component: apig.http.api
+  #   Parameters:
+  #     ApiName: {{Subfix(Join(Parameters.Name, 'rest'))}}
+  #     Type: "Rest"
+
+  # ChatgptWebRest:
+  #   DependsOn: AliyunService
+  #   Component: apig.rest
+  #   Operation:
+  #     Path: 'GET /api'
+  #     ApiId: {{RosOutput(RestApi, "HttpApiId")}}
+  #     Name: {{Join(Parameters.Name, 'ops')}}
+  #     Scene: SingleService
+  #     Services:
+  #       - ServiceId: {{RosOutput(AliyunService, "ServiceId")}}
+  #         Protocol: HTTP
+  #         Weight: 100
+  #   Parameters:
+  #     RestApiName: {{Subfix(Join(Parameters.Name, 'rest'))}}
+  #     BasePath:  /api
+  #     OperationName: {{Join(Parameters.Name, 'index')}}
+
+
