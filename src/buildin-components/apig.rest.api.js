@@ -4,7 +4,7 @@ HttpApi:
   MsaResource: true
   Properties:
     HttpApiName: {{Parameters.ApiName}}
-    Type: Rest
+    Type: Http
     BasePath: {{Default(Parameters.BasePath, '/')}}
     Protocols: '["HTTP", "HTTPS"]'
 `

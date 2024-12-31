@@ -21,8 +21,8 @@ Parameters:
 
 Composer:
   OssService:
-    Template: apig.service.yml
+    Component: apig.service
     Parameters:
       Port: 80
-      AddressesName: {{Join(Parameters.OssBucket,'-',Parameters.Region,'-',Parameters.Region,'-internal.aliyuncs.com')}}
+      AddressesName: {{Join([Parameters.OssBucket,Parameters.Region,Parameters.Region,'internal.aliyuncs.com'],'-')}}
       Name: {{Subfix('OssService')}}

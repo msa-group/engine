@@ -57,8 +57,8 @@ const Utils = {
     }
   })(),
 
-  Join: (a: string, b: string, symbol: string = '-') => {
-    return `${a}${symbol}${b}`;
+  Join: (arr: string[], symbol: string = '') => {
+    return arr.join(symbol);
   },
 
   Default: <T, B>(value: T, defaultValue: B) => {

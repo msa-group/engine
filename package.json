@@ -6,7 +6,9 @@
   "scripts": {
     "test": "jest --watch",
     "dev": "rspack serve",
-    "build": "tsc"
+    "build": "node scripts/build.js && tsc",
+    "prepublishOnly": "npm run build"
+
   },
 	"publishConfig": {
     "access": "public",

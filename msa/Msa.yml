@@ -47,7 +47,7 @@ Composer:
   RouteApi:
     Component: apig.rest.api
     Parameters:
-      ApiName: {{Subfix(Join(Parameters.Name, 'http'))}}
+      ApiName: {{Subfix(Join([Parameters.Name, 'http'], '-'))}}
 
   ChatgptWebRoute:
     DependsOn:
@@ -57,7 +57,7 @@ Composer:
     Component: apig.route
     Operation:
       ApiId: {{RosOutput(RouteApi, "HttpApiId")}}
-      Name: {{Join(Parameters.Name, 'index')}}
+      Name: {{Join([Parameters.Name, 'index'], '-')}}
       Path: 'Prefix /'
       Scene: MultiServiceByRatio
       Services:
@@ -68,8 +68,8 @@ Composer:
           Protocol: HTTP
           Weight: 50
     Parameters:
-      HttpApiName: {{Subfix(Join(Parameters.Name, 'api'))}}
-      RouteName: {{Join(Parameters.Name, 'index')}}
+      HttpApiName: {{Subfix(Join([Parameters.Name, 'api'], '-'))}}
+      RouteName: {{Join([Parameters.Name, 'index'], '-')}}
 
   HttpRewritePolicy:
     DependsOn: ChatgptWebRoute
@@ -103,7 +103,7 @@ Composer:
   # RestApi:
   #   Component: apig.http.api
   #   Parameters:
-  #     ApiName: {{Subfix(Join(Parameters.Name, 'rest'))}}
+  #     ApiName: {{Subfix(Join([Parameters.Name, 'rest'], '-'))}}
   #     Type: "Rest"
 
   # ChatgptWebRest:
@@ -112,15 +112,15 @@ Composer:
   #   Operation:
   #     Path: 'GET /api'
   #     ApiId: {{RosOutput(RestApi, "HttpApiId")}}
-  #     Name: {{Join(Parameters.Name, 'ops')}}
+  #     Name: {{Join([Parameters.Name, 'ops'], '-')}}
   #     Scene: SingleService
   #     Services:
   #       - ServiceId: {{RosOutput(AliyunService, "ServiceId")}}
   #         Protocol: HTTP
   #         Weight: 100
   #   Parameters:
-  #     RestApiName: {{Subfix(Join(Parameters.Name, 'rest'))}}
+  #     RestApiName: {{Subfix(Join([Parameters.Name, 'rest'], '-'))}}
   #     BasePath:  /api
-  #     OperationName: {{Join(Parameters.Name, 'index')}}
+  #     OperationName: {{Join([Parameters.Name, 'index'], '-')}}
 
 

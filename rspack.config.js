@@ -2,6 +2,11 @@ const rspack = require('@rspack/core');
 const Router = require('./scripts/mock');
 const watchFile = require('./scripts/ymlToStr');
 
+globalThis.process.env.RUNNER = 'rspack';
+
+/**
+ * @type {import('@rspack/core').Configuration}
+ */
 module.exports = {
   entry: {
     main: './demo/index.ts',

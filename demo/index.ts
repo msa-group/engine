@@ -1,4 +1,4 @@
-import Engine from "../src/index";
+import Engine from "../lib/index";
 
 
 declare global {
@@ -19,6 +19,10 @@ function init() {
   const $panelTitle = document.querySelectorAll('.panel-title')!;
 
   const $generateBtn = document.getElementById('generate-btn') as HTMLButtonElement;
+
+  const $errorDialog = document.getElementById('error-dialog') as HTMLDialogElement;
+  const $errorDialogContent = document.getElementById('error-dialog-content') as HTMLDivElement;
+  const $errorDialogClose = document.getElementById('error-dialog-close') as HTMLDivElement;
 
   const yamlViewer = window.CodeMirror.fromTextArea(document.getElementById('yaml-viewer'), {
     mode: 'yaml',
@@ -42,6 +46,10 @@ function init() {
 
       const operationJson = parseEngine.getOperations();
       $jsonViewer.textContent = JSON.stringify(operationJson, null, 2);
+    }).catch(err => {
+      $errorDialogContent.textContent = err.message;
+      $errorDialog.showModal();
+      console.error(err);
     });
   }
 
@@ -49,6 +57,10 @@ function init() {
     $title.addEventListener('click', () => {
       $title.classList.toggle('active');
     })
+  });
+
+  $errorDialogClose.addEventListener('click', () => {
+    $errorDialog.close();
   });
 
 
@@ -67,9 +79,11 @@ function init() {
 
 
 
-  fetch("/api/msa").then(res => res.json()).then(({ data }) => {
-    yamlEditor.setValue(data.content);
-    generate(data.content);
+  fetch("/api/msa?filePath=./msa/Msa.yml").then(res => res.json()).then(({ data }) => {
+    if (data.content) {
+      yamlEditor.setValue(data.content);
+      generate(data.content);
+    }
   });
 }
 
