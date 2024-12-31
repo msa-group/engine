@@ -7,7 +7,6 @@
     "noUnusedLocals": true,
     "stripInternal": true,
     "skipLibCheck": true,
-    "declaration": true,
     "forceConsistentCasingInFileNames": true,
     "allowSyntheticDefaultImports": true,
     "typeRoots": [ "./typings", "./node_modules/@types"],

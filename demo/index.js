@@ -1,12 +1,6 @@
 import Engine from "../lib/index";
 
 
-declare global {
-  interface Window {
-    CodeMirror: any;
-  }
-}
-
 // const $root = document.createElement('div');
 
 window.onload = () => {
@@ -14,15 +8,15 @@ window.onload = () => {
 }
 
 function init() {
-  const $jsonViewer = document.getElementById('json-viewer')!;
+  const $jsonViewer = document.getElementById('json-viewer');
 
-  const $panelTitle = document.querySelectorAll('.panel-title')!;
+  const $panelTitle = document.querySelectorAll('.panel-title');
 
-  const $generateBtn = document.getElementById('generate-btn') as HTMLButtonElement;
+  const $generateBtn = document.getElementById('generate-btn');
 
-  const $errorDialog = document.getElementById('error-dialog') as HTMLDialogElement;
-  const $errorDialogContent = document.getElementById('error-dialog-content') as HTMLDivElement;
-  const $errorDialogClose = document.getElementById('error-dialog-close') as HTMLDivElement;
+  const $errorDialog = document.getElementById('error-dialog');
+  const $errorDialogContent = document.getElementById('error-dialog-content');
+  const $errorDialogClose = document.getElementById('error-dialog-close');
 
   const yamlViewer = window.CodeMirror.fromTextArea(document.getElementById('yaml-viewer'), {
     mode: 'yaml',
