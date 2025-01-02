@@ -1,0 +1,7 @@
+{{#if or(Parameters.isWebsite, Parameters.GatewayId)}}
+OssWebsite:
+  Type: ALIYUN::OSS::Website
+  Properties:
+    BucketName: {{Parameters.BucketName}}
+    WebsiteConfiguration: ""
+{{/if}}
