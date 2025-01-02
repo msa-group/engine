@@ -11,7 +11,7 @@ function Router(req, res, next) {
 
 const RouterMap = {
   '/api/msa': (req, res) => {
-    const filePath = process.env.RUNNER === 'rspack' ? req.query.filePath : (process.argv[2] || './msa.yml');
+    const filePath = req.query.filePath;
     const content = fs.existsSync(filePath) ? fs.readFileSync(filePath, 'utf8') : '';
     res.json({
         code: 200,

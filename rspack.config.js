@@ -9,7 +9,7 @@ globalThis.process.env.RUNNER = 'rspack';
  */
 module.exports = {
   entry: {
-    main: './demo/index.ts',
+    main: './demo/index.js',
   },
   plugins: [
     new rspack.HtmlRspackPlugin({
