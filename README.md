@@ -205,6 +205,15 @@ HttpTrigger:
 * `b` **{unknown}**
 * `returns` **{unknown}**: 返回值，如果 `a` 被隐式转换为 false，则返回 `b`，否则返回 `a`
 
+### [{{OSSAddress}}](buildin/utils.ts)
+获取 OSS 地址
+**参数**：`ossName`、`region`、`type`
+
+* `ossName` **{string}**
+* `region` **{string}**
+* `type` **{string}** 默认值为 `internal`
+* `returns` **{string}**: 返回值，返回 OSS 地址
+
 ## ros
 
 ### [{{RosOutput}}](buildin/ros.ts)

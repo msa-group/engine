@@ -34,7 +34,7 @@ ServiceTlsPolicy:
     AttachResourceType: "GatewayService"
 {{/if}}
 
-{{#if Parameters.isOssWebsite}}
+{{#if Parameters.IsOSSWebsite}}
 OSSWebsite:
   Type: ALIYUN::OSS::Website
   Properties:
