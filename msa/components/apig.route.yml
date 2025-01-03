@@ -4,7 +4,7 @@ Route:
   MsaResource: true
   Properties:
     HttpApiId: {{Operation.ApiId}}
-    RouteName: {{Parameters.RouteName}}
+    RouteName: {{Operation.Name}}
     EnvironmentInfo: '{"EnvironmentId": "{{Parameters.EnvironmentId}}"}'
     Match: '{"Path": {"Type":"{{GetOperationPath(Operation, "type")}}", "Value": "{{GetOperationPath(Operation, "value")}}"}}'
     Backend: {{RosRouterServices(Operation.Services, Operation.Scene)}}

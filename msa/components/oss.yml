@@ -1,7 +1,10 @@
-{{#if or(Parameters.isWebsite, Parameters.GatewayId)}}
-OssWebsite:
+{{#if or(Parameters.isOssWebsite, Parameters.GatewayId)}}
+OSSWebsite:
   Type: ALIYUN::OSS::Website
   Properties:
-    BucketName: {{Parameters.BucketName}}
-    WebsiteConfiguration: ""
+    BucketName: {{Parameters.OssBucketName}}
+    WebsiteConfiguration:
+      IndexDocument:
+        Suffix: index.html
+        SupportSubDir: 'true'
 {{/if}}

@@ -33,3 +33,14 @@ ServiceTlsPolicy:
     GatewayId: {{Parameters.GatewayId}}
     AttachResourceType: "GatewayService"
 {{/if}}
+
+{{#if Parameters.isOssWebsite}}
+OSSWebsite:
+  Type: ALIYUN::OSS::Website
+  Properties:
+    BucketName: {{Parameters.OssBucketName}}
+    WebsiteConfiguration:
+      IndexDocument:
+        Suffix: index.html
+        SupportSubDir: 'true'
+{{/if}}
