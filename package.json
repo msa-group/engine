@@ -1,11 +1,11 @@
 {
   "name": "msa-engine",
-  "version": "0.0.1-beta-9",
+  "version": "0.0.1-beta-10",
   "description": "",
   "main": "lib/index.js",
   "scripts": {
     "test": "jest --watch",
-    "dev": "tsc && rspack serve",
+    "dev": "tsc && node scripts/build.js && rspack serve",
     "build": "node scripts/build.js && tsc",
     "prepublishOnly": "npm run build"
   },

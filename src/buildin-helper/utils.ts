@@ -34,6 +34,12 @@ const Utils = {
         }
         return s;
       }
+      try {
+        JSON.parse(value);
+        return JSON.stringify(value);
+      } catch (error) {
+        return value;
+      }
     }
     if (
       typeof value === "string" ||
