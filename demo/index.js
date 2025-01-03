@@ -72,13 +72,23 @@ function init() {
 
 
 
+  // 
 
   fetch("/api/msa?filePath=./msa/Msa.yml").then(res => res.json()).then(({ data }) => {
     if (data.content) {
       yamlEditor.setValue(data.content);
       generate(data.content);
     }
-  });
+  })
+  // fetch("https://api.devsapp.cn/v3/packages/static-website-oss/release/latest?package-name=static-website-oss").then(res => res.json()).then(({ body }) => {
+  //   const { syaml } = body;
+  //   if (syaml) {
+  //     yamlEditor.setValue(syaml);
+  //     generate(syaml);
+  //   }
+  //   console.log(syaml)
+    
+  // });
 }
 
 

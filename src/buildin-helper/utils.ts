@@ -95,6 +95,10 @@ const Utils = {
     return !Utils.IsEmpty(value);
   },
 
+  OSSAddress: (ossName: string, region: string, type = "internal") => {
+    return `${ossName}.${Utils.Join(["oss", region, type].filter(Boolean), "-")}.aliyuncs.com`
+  }
+
 }
 
 export default Utils;
