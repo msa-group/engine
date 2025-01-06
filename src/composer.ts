@@ -1,4 +1,4 @@
-import type { ComposerData, ParseOptions } from "./types";
+import type { ComposerData, GlobalData } from "./types";
 
 class Composer {
   name: string;
@@ -8,7 +8,7 @@ class Composer {
   operation: Record<string, any>;
   componentName: string;
 
-  constructor(data: ComposerData, global: ParseOptions['globalData']) {
+  constructor(data: ComposerData, global: GlobalData) {
     this.name = data.name;
     this.props = data.props || {};
     this.operation = data.operation;

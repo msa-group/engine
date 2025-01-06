@@ -25,13 +25,12 @@ export interface ComposorItem {
   Component: string;
 }
 
-export interface ParseOptions {
-  globalData: {
-    Parameters: Record<string, any>;
-  };
-  componentPath: string;
-}
+// unimplemented
+export interface ParseOptions { }
 
+export interface GlobalData {
+  Parameters: Record<string, any>;
+}
 
 export interface ComposerData {
   name: string;

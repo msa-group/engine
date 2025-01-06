@@ -7,7 +7,7 @@ fetch("https://api.devsapp.cn/v3/packages/static-website-oss/release/latest?pack
 .then(({ body }) => {
   const { syaml } = body;
   const msaEngine = new MsaEngine();
-    msaEngine.parse(syaml).then((parseEngine) => {
+    msaEngine.parse(syaml, { Name: "nextchat-web-test" }).then((parseEngine) => {
       const rosYAML = parseEngine.create();
       const arcSpec = parseEngine.getOperations();
       console.log('rosYAML', rosYAML);

@@ -3,7 +3,7 @@ import Handlebars from "handlebars";
 import { get, chain, isEmpty } from "radash";
 import ParseEngine from "./parseEngine";
 import ParserRules from "./parserRules";
-import type { Composor, EngineContext, IGlobalDefaultParameters, ParseOptions } from "./types";
+import type { Composor, EngineContext, GlobalData, IGlobalDefaultParameters, ParseOptions } from "./types";
 import { extractParametersBlock, mergeName, sortByDependsOn } from "./utils";
 import buildInHelper from './buildin-helper';
 import log from "./log";
@@ -16,7 +16,7 @@ class Engine {
   private rules: ParserRules;
   private context: EngineContext;
   private buildinHelpers: Record<string, any> = buildInHelper;
-  private globalData: ParseOptions['globalData'] = { Parameters: {} };
+  private globalData: GlobalData = { Parameters: {} };
   private nameMapping: Record<string, Record<string, string | boolean>> = {};
   private deletedMergedName: Set<string> = new Set();
   private mergedNames: Set<string> = new Set();
@@ -50,11 +50,11 @@ Resources:`,
     this.buildinHelpers = { ...this.buildinHelpers, ...helpers };
   }
 
-  parse(str: string, options: ParseOptions = { componentPath: './buildin-components', globalData: { Parameters: {} } })
+  parse(str: string, parameters: Record<string, any> = {}, options: ParseOptions = {})
     : Promise<ParseEngine> {
     return new Promise(async (resolve, reject) => {
       try {
-        await this.#preparse(str, { ...options, isComposer: true });
+        await this.#preparse(str, { parameters, isComposer: true });
         // 将特殊处理后的模版交给 js-yaml load 解析出 json 格式数据
         this.#parseAsYaml();
         this.#createContextData();
@@ -68,18 +68,25 @@ Resources:`,
     });
   }
 
-  async #preparse(text: string, config: ParseOptions & { isComposer: boolean }) {
+  async #preparse(text: string, config: { isComposer: boolean, parameters: Record<string, any> }) {
     let preparedText = text;
     for (const rule of this.rules.preparsRules) {
       preparedText = rule.replace(preparedText);
     }
     if (config.isComposer) {
       const contextData = {
-        Parameters: this.#mergedGlobalData(
-          get(
-            jsYaml.load(extractParametersBlock(preparedText)), 'Parameters', {}) as IGlobalDefaultParameters
-        ),
+        Parameters: {
+          ...this.#mergedGlobalData(
+            get(
+              jsYaml.load(extractParametersBlock(preparedText)), 'Parameters', {}) as IGlobalDefaultParameters
+          ),
+          ...config.parameters,
+        },
         ...this.buildinHelpers,
+      }
+      this.context.data = {
+        ...this.context.data,
+        ...contextData,
       }
 
       // 先由 handlebars 解析出 Composer 文本中的 if 表达式逻辑
@@ -112,10 +119,10 @@ Resources:`,
     return this.context.templateText.dependencies;
   }
 
-  async #parseSubTemplate(config: ParseOptions & { isComposer: boolean }) {
+  async #parseSubTemplate(config: { parameters: Record<string, any>, isComposer: boolean }) {
     const dependencies = this.context.templateText.dependencies;
     for (const [key, value] of Object.entries(dependencies)) {
-      const template = await import(`${config.componentPath}/${value}`) as { default: string };
+      const template = await import(`./buildin-components/${value}`) as { default: string };
       this.context.templateText.dependencies[key] = await this.#preparse(template.default, { ...config, isComposer: false });
     }
   }
@@ -124,7 +131,10 @@ Resources:`,
     try {
       const mainText = this.context.templateText.main;
       const mainYamlToJson = jsYaml.load(mainText);
-      this.globalData.Parameters = this.#mergedGlobalData(mainYamlToJson.Parameters || {});
+      this.globalData.Parameters = {
+        ...this.#mergedGlobalData(mainYamlToJson.Parameters || {}),
+        ...this.context.data.Parameters,
+      };
       this.context.templateJson.main = mainYamlToJson;
       this.#parseSubYamlTemplate();
     } catch (error) {

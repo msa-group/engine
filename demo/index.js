@@ -87,7 +87,7 @@ function init() {
   //     generate(syaml);
   //   }
   //   console.log(syaml)
-    
+
   // });
 }
 
