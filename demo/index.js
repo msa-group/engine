@@ -34,6 +34,13 @@ function init() {
   function generate(text) {
     const engine = new Engine();
 
+    engine.registerHelper({
+      Log: (...arg) => {
+        console.log(...arg);
+        return arg;
+      }
+    })
+
     engine.parse(text).then((parseEngine) => {
 
       yamlViewer.setValue(parseEngine.create());
