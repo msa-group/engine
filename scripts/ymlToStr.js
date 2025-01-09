@@ -10,18 +10,17 @@ function watchFile(watchPath = 'msa/components', watch = true, build = false) {
 
   for (const file of files) {
     const text = fs.readFileSync(`${watchPath}/${file}`, 'utf8');
-    const context = text.replace(/\${/g, '\\${');
     const fileName = file.replace(/\.[^/.]+$/, '');
-    j[fileName] = context;
+    j[fileName] = text;
   }
 
   fs.writeFileSync(`src/buildin-components/index.js`, `export default ${JSON.stringify(j)}`,);
   if (watch) {
-    fs.watch(watchPath, { recursive: true }, (event, filename) => {
-      const text = fs.readFileSync(`${watchPath}/${filename}`, 'utf8');
-      const context = `export default \`${text}\``.replace(/\${/g, '\\${');
-      const fileName = filename.replace(/\.[^/.]+$/, '');
-      fs.writeFileSync(`src/buildin-components/${fileName}.js`, context);
+    fs.watch(watchPath, { recursive: true }, (event, file) => {
+      const text = fs.readFileSync(`${watchPath}/${file}`, 'utf8');
+      const fileName = file.replace(/\.[^/.]+$/, '');
+      j[fileName] = text;
+      fs.writeFileSync(`src/buildin-components/index.js`, `export default ${JSON.stringify(j)}`,);
     })
   }
 
