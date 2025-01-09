@@ -1,5 +1,5 @@
 import * as jsYaml from "js-yaml";
-import { get } from "radash";
+import { get } from "lodash";
 import { findKeyBy, mergeName, toArray, toNotEmptyArray } from "./utils";
 import ParserRules from "./parserRules";
 import { keywords } from "./const";

@@ -1,6 +1,7 @@
 import jsYaml from "js-yaml";
 import Handlebars from "handlebars";
-import { get, chain, isEmpty } from "radash";
+import { get, isEmpty } from "lodash";
+import { pipe} from "lodash/fp";
 import ParseEngine from "./parseEngine";
 import ParserRules from "./parserRules";
 import type { Composor, EngineContext, GlobalData, IGlobalDefaultParameters, ParseOptions } from "./types";
@@ -9,7 +10,7 @@ import buildInHelper from './buildin-helper';
 import log from "./log";
 import Composer from "./composer";
 import Component from "./component";
-
+import buildinComponents from './buildin-components';
 
 class Engine {
 
@@ -90,7 +91,7 @@ Resources:`,
       }
 
       // 先由 handlebars 解析出 Composer 文本中的 if 表达式逻辑
-      const parsedText = chain(
+      const parsedText = pipe(
         (text) => this.rules.rule.ifLogic.replace(text, contextData),
         (text) => Handlebars.compile(text, { noEscape: true }),
       )(preparedText)(contextData);
@@ -122,8 +123,8 @@ Resources:`,
   async #parseSubTemplate(config: { parameters: Record<string, any>, isComposer: boolean }) {
     const dependencies = this.context.templateText.dependencies;
     for (const [key, value] of Object.entries(dependencies)) {
-      const template = await import(`./buildin-components/${value}`) as { default: string };
-      this.context.templateText.dependencies[key] = await this.#preparse(template.default, { ...config, isComposer: false });
+      const template = buildinComponents[value];
+      this.context.templateText.dependencies[key] = await this.#preparse(template, { ...config, isComposer: false });
     }
   }
 
@@ -147,7 +148,7 @@ Resources:`,
     const dependencies = this.context.templateText.dependencies;
     for (const [key, text] of Object.entries(dependencies)) {
       const data = this.context.templateJson.main.Composer[key];
-      const t = chain(
+      const t = pipe(
         (text) => this.rules.rule.ifLogic.replace(text, {
           Parameters: {
             ...this.globalData.Parameters,
@@ -319,7 +320,7 @@ Resources:`,
         value, replaceContext, key, this.nameMapping, true,
       );
 
-      const parsedText = chain(
+      const parsedText = pipe(
         this.rules.rule.templateWithAnnotationToHandlebars.replace,
         (text) => this.rules.rule.parseDoubleCurliesAndEvalCall.replace(text, replaceContext),
       )(text);
