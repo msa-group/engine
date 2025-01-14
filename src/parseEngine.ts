@@ -3,9 +3,10 @@ import { findItemInContextData, removeFileExtension } from "./utils";
 import { findKeyBy } from "./utils";
 import type { EngineContext } from "./types";
 import Component from "./component";
-import buildInHelper from "./buildin-helper";
+import { getUtilsHelper } from "./buildin-helper/utils";
 import log from "./log";
 
+const utilsHelper = getUtilsHelper();
 class ParseEngine {
   private context: EngineContext;
 
@@ -27,7 +28,7 @@ class ParseEngine {
         const apiId = get(operation.ApiId, 'Fn::GetAtt', [])[0] || "";
         currentByApiId = findItemInContextData(this.context.data, apiId);
         const type = get(currentByApiId.item?.json, 'Properties.Type', '');
-        const basePath = buildInHelper.GetOperationPath(operation, "value");
+        const basePath = utilsHelper.GetOperationPath(operation, "value");
 
         const opt = {
           Name: operation.Name,

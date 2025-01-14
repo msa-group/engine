@@ -31,14 +31,15 @@ function init() {
     lineNumbers: true,
   });
 
-  function generate(text) {
+  async function generate(text) {
     const engine = new Engine();
+
 
     engine.registerHelper({
       Log: (...arg) => {
         console.log(...arg);
         return arg;
-      }
+      },
     })
 
     engine.parse(text).then((parseEngine) => {
@@ -47,6 +48,10 @@ function init() {
 
       const operationJson = parseEngine.getOperations();
       $jsonViewer.textContent = JSON.stringify(operationJson, null, 2);
+
+      engine.parse(text).then((parseEngine) => {
+        console.log(parseEngine.create())
+      })
     }).catch(err => {
       $errorDialogContent.textContent = err.message;
       $errorDialog.showModal();

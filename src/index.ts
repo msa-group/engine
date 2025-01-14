@@ -1,12 +1,12 @@
 import jsYaml from "js-yaml";
 import Handlebars from "handlebars";
 import { get, isEmpty } from "lodash";
-import { pipe} from "lodash/fp";
+import { pipe } from "lodash/fp";
 import ParseEngine from "./parseEngine";
 import ParserRules from "./parserRules";
 import type { Composor, EngineContext, GlobalData, IGlobalDefaultParameters, ParseOptions } from "./types";
 import { extractParametersBlock, mergeName, sortByDependsOn } from "./utils";
-import buildInHelper from './buildin-helper';
+import { getBuildInHelper } from './buildin-helper';
 import log from "./log";
 import Composer from "./composer";
 import Component from "./component";
@@ -16,7 +16,8 @@ class Engine {
 
   private rules: ParserRules;
   private context: EngineContext;
-  private buildinHelpers: Record<string, any> = buildInHelper;
+  private buildinHelpers: Record<string, any> = {};
+  private registeredHelper: Record<string, any> = {};
   private globalData: GlobalData = { Parameters: {} };
   private nameMapping: Record<string, Record<string, string | boolean>> = {};
   private deletedMergedName: Set<string> = new Set();
@@ -24,7 +25,13 @@ class Engine {
 
   constructor() {
     this.rules = new ParserRules();
-    // 原始模版
+    this.init();
+  }
+
+  private init() {
+    this.nameMapping = {};
+    this.deletedMergedName = new Set();
+    this.mergedNames = new Set();
     this.context = {
       templateText: {
         // 主模板 Composer 的内容
@@ -44,15 +51,19 @@ class Engine {
       // 最终输出的 yaml 字符串
       resultYamlString: `ROSTemplateFormatVersion: '2015-09-01'
 Resources:`,
-    };
+    }
   }
 
   registerHelper<T>(helpers: { [key: string]: T }) {
-    this.buildinHelpers = { ...this.buildinHelpers, ...helpers };
+    // this.buildinHelpers = { ...this.buildinHelpers, ...helpers };
+    this.registeredHelper = helpers;
   }
 
   parse(str: string, parameters: Record<string, any> = {}, options: ParseOptions = {})
     : Promise<ParseEngine> {
+    this.init();
+    const buildinHelpersInst = getBuildInHelper();
+    this.buildinHelpers = { ...buildinHelpersInst, ...this.registeredHelper }
     return new Promise(async (resolve, reject) => {
       try {
         await this.#preparse(str, { parameters, isComposer: true });
@@ -95,7 +106,6 @@ Resources:`,
         (text) => this.rules.rule.ifLogic.replace(text, contextData),
         (text) => Handlebars.compile(text, { noEscape: true }),
       )(preparedText)(contextData);
-
       this.#analyzeTemplate(parsedText);
       this.context.templateText.main = parsedText;
       await this.#parseSubTemplate(config);
@@ -252,7 +262,6 @@ Resources:`,
   #parseAsHandlebars() {
     this.context.templateJson.dependencies = [];
     const resultWithoutParseParametersList: ([string, string])[] = [];
-
     const mainYamlText = this.rules.rule.parseDoubleCurliesAndEvalCall.replace(
       this.context.templateText.main,
       {

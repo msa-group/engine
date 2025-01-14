@@ -1,12 +1,12 @@
-import ComparionsHelper from './comparison';
-import UtilsHelper from './utils';
-import RosHelper from './ros';
+import { getComparionsHelper } from './comparison';
+import { getUtilsHelper } from './utils';
+import { getRosHelper } from './ros';
 
 
-const buildInHelper = {
-  ...ComparionsHelper,
-  ...UtilsHelper,
-  ...RosHelper,
-};
-
-export default buildInHelper;
+export const getBuildInHelper = () => {
+  return {
+    ...getComparionsHelper(),
+    ...getUtilsHelper(),
+    ...getRosHelper(),
+  };
+}
