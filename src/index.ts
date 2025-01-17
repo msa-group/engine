@@ -185,7 +185,7 @@ Resources:`,
         props: inContextData ? inContextData.props : value.Properties,
         dependsOn: value.DependsOn,
         operation: inContextData ? inContextData.operation : value.Operation,
-        componentName: value.Template,
+        componentName: value.Component,
       }
       const composerInstance = new Composer(data, this.globalData);
       const dependencies = this.context.templateJson.dependencies;
@@ -289,7 +289,7 @@ Resources:`,
         props: props,
         dependsOn: value.DependsOn,
         operation: this.#createOperationContext(operation),
-        componentName: value.Template,
+        componentName: value.Component,
       }
       const composerInstance = new Composer(data, this.globalData);
       if (this.context.data[key]) {

@@ -21,12 +21,20 @@ class ParseEngine {
   getOperations() {
     const composer = this.context.templateJson.main.Composer as Record<string, any>;
     const operations = [];
+    let apis_mut = new Map<string, {Name: string; Type: string; BasePath: string}>();
     for (const [_key, value] of Object.entries(composer)) {
       const operation = value.Operation;
       let currentByApiId: { item: Component | undefined, key: string | undefined } = { item: undefined, key: "" };
       if (operation) {
         const apiId = get(operation.ApiId, 'Fn::GetAtt', [])[0] || "";
         currentByApiId = findItemInContextData(this.context.data, apiId);
+        if (!apis_mut.has(currentByApiId.item.name)) {
+          apis_mut.set(currentByApiId.item.name, {
+            Name: currentByApiId.item.props.HttpApiName,
+            Type: currentByApiId.item.props.Type,
+            BasePath: currentByApiId.item.props.BasePath,
+          });
+        }
         const type = get(currentByApiId.item?.json, 'Properties.Type', '');
         const basePath = utilsHelper.GetOperationPath(operation, "value");
 
@@ -88,8 +96,12 @@ class ParseEngine {
       }
     }
 
+    // 目前仅取一个
+    const api = apis_mut.values().next().value;
+
     return {
       Operations: operations,
+      Api: api,
     }
   }
 }
