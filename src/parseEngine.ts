@@ -1,5 +1,5 @@
 import { get} from "lodash";
-import { findItemInContextData, removeFileExtension } from "./utils";
+import { findItemInContextData, removeFileExtension, toNotEmptyArray } from "./utils";
 import { findKeyBy } from "./utils";
 import type { EngineContext } from "./types";
 import Component from "./component";
@@ -44,7 +44,7 @@ class ParseEngine {
           Scene: operation.Scene,
           Type: type,
           BasePath: basePath,
-          Services: operation.Services.map(item => {
+          Services: toNotEmptyArray(operation.Services).map(item => {
             const tempName = get(item, 'ServiceId.Fn::GetAtt', [])[0];
             let current = findItemInContextData(this.context.data, tempName);
 

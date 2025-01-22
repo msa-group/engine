@@ -285,7 +285,7 @@ Fn::Sub:
 
 ```yaml
 Fn::Sub:
-  - '["item1","item2"]'
+  - '["${item1}","${item2}"]'
   - item1: test1
     item2: test2
 ```

@@ -1,4 +1,4 @@
-import { toArray, toNotEmptyArray } from "../utils";
+import { toNotEmptyArray } from "../utils";
 
 
 
@@ -21,8 +21,8 @@ export const getRosHelper = () => {
       };
       return temp;
     },
-    RosRouterServices: (service: any[], scene?: string) => {
-      const services = toArray(service);
+    RosRouterServices: (service: any[] = [], scene?: string) => {
+      const services = toNotEmptyArray(service);
       const serviceIds = services.map((_item, i) => `ServiceId${i + 1}`);
       const json = !scene ?
         (
