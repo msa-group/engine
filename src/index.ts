@@ -11,6 +11,7 @@ import log from "./log";
 import Composer from "./composer";
 import Component from "./component";
 import buildinComponents from './buildin-components';
+import plugins from "./plugins";
 
 class Engine {
 
@@ -158,6 +159,17 @@ Resources:`,
     const dependencies = this.context.templateText.dependencies;
     for (const [key, text] of Object.entries(dependencies)) {
       const data = this.context.templateJson.main.Composer[key];
+      // 判断是否有 PluginClassName 并且没有  PluginClassId  
+      // 将 PluginClassName 映射到 PluginClassId
+      if (data.Parameters.PluginClassName && !data.Parameters.PluginClassId) {
+        const plugin = plugins.find(
+          v => v.name === data.Parameters.PluginClassName ||
+          v.alias === data.Parameters.PluginClassName
+        );
+        if (plugin) {
+          data.Parameters.PluginClassId = plugin.id;
+        }
+      }
       const t = pipe(
         (text) => this.rules.rule.ifLogic.replace(text, {
           Parameters: {
@@ -169,6 +181,7 @@ Resources:`,
         (text) => Handlebars.compile(text, { noEscape: true }),
       )(text)({});
       const yamlToJson = jsYaml.load(t);
+      console.log(yamlToJson, 'yamlToJson...')
       this.context.templateJson.dependencies[key] = yamlToJson;
       this.context.templateText.dependencies[key] = t;
     }
