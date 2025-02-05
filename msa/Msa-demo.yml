@@ -1,0 +1,80 @@
+Service:
+  httpbin:
+    - Backend:
+        Component: fc3
+        Properties:
+          Function:
+            CustomContainerConfig:
+              Fn::Sub:
+                - '{"Port": 80,"Image":"registry.${Region}.aliyuncs.com/oss-share/msa:httpbin", "RegistryConfig":{"CertConfig":{"Insecure":false}}}'
+                - Region: {{Parameters.Region}}
+        Parameters:
+          Name: {{Subfix(Parameters.Name)}}
+      Service:
+        DependsOn: Backend
+        Component: apig.service
+        Parameters:
+          Port: 80
+          AddressesName: {{RosOutputHostName(Backend.HttpTrigger, "UrlIntranet")}}
+          Name: {{Subfix(Join([Parameters.Name, '-','svc']))}}
+    - Backend:
+        Component: sae
+        Properties:
+          Function:
+            CustomContainerConfig:
+              Fn::Sub:
+                - '{"Port": 80,"Image":"registry.${Region}.aliyuncs.com/oss-share/msa:httpbin", "RegistryConfig":{"CertConfig":{"Insecure":false}}}'
+                - Region: {{Parameters.Region}}
+        Parameters:
+          Name: {{Subfix(Parameters.Name)}}
+      Service:
+        DependsOn: Backend
+        Component: apig.service
+        Parameters:
+          Port: 80
+          AddressesName: {{RosOutputHostName(Backend.HttpTrigger, "UrlIntranet")}}
+          Name: {{Subfix(Join([Parameters.Name, '-','svc']))}}
+      
+
+Composer:
+  RouteApi:
+    Component: apig.http.api
+    Parameters:
+      ApiName: {{Subfix(Join([Parameters.Name, '-','http']))}}
+  HttpRoute:
+    DependsOn:
+      - RouteApi
+    Component: apig.route
+    Operation:
+      ApiId: {{RosOutput(RouteApi, "HttpApiId")}}
+      Name: {{Parameters.Name}}
+      Path: 'Prefix /'
+      Scene: SingleService
+      Services:
+        - ServiceId: {{RosOutputServiceId("httpbin")}}
+          Protocol: HTTP
+          Weight: 100
+  HttpRewritePolicy:
+    DependsOn: HttpRoute
+    Component: apig.router.policy
+    Parameters:
+      PolicyClassName: "HttpRewrite"
+      PolicyConfig:
+        Fn::Sub:
+          - '{"pathType":"Prefix","host":"${HOST}","enable":true}'
+          - HOST: {{RosOutputHostName(FcBackend.HttpTrigger, "UrlIntranet")}}
+      RouteIds:
+        - {{RosOutput(HttpRoute, "RouteId")}}
+  KeyAuthPlugin:
+    DependsOn: HttpRoute
+    Component: apig.router.plugin
+    Parameters:
+      PluginClassId: pls-cqebrgh4ckt6ppatmprx
+      RouteIds:
+        - {{RosOutput(HttpRoute, "RouteId")}}
+      PluginConfig: |
+        consumers:
+        - credential: 2bda943c-ba2b-11ec-ba07-00163e1250b5
+          name: consumer1
+        keys:
+        - x-api-key

@@ -1,0 +1,15 @@
+Global:
+  GatewayId: gw-cu9g7dem1hkn32ee70bg
+  EnvironmentId: env-cu9g82mm1hkui0vcv5eg
+  Region: cn-hangzhou
+  Name: 'key-auth-plugin'
+
+Gateway:
+  ApiName: 'gw-cu9g7dem1hkn32ee70bg'
+
+Service:
+  httpbin:
+    Component: fc3
+    Parameters:
+      FunctionName: xx
+      CPU: 1024
