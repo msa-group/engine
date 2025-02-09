@@ -14,6 +14,7 @@ class ParserRules {
     templateWithAnnotationToHandlebars: IParseRule;
     parseDoubleCurliesAndEvalCall: IParseRule;
     ifLogic: IParseRule;
+    eachLoop: IParseRule;
   }
 
   constructor() {
@@ -32,6 +33,37 @@ class ParserRules {
     ]
 
     this.rule = {
+      eachLoop: {
+        replace(str: string, context: any, key?: string, nameMapping?) {
+          const eachBlockRegex = /["']#%%#each\s+(.+?)%%["']([\s\S]*?)["']#%%\/each%%["']/g;
+
+          // 处理 #each 块
+          const processedText = str.replace(eachBlockRegex, (match, expr, loopTemplate) => {
+            // dont't delete this variable, it's used in the eval context
+            const res = eval(expr);
+            let rt = "";
+            res.forEach((item, index) => {
+              const t = loopTemplate.replace(/["']#%%([\s\S]*?)%%["']/g, (match, expr) => {
+                if (!expr.startsWith("@")) {
+                  expr = `context.${expr}`;
+                }
+                if (expr === "@index") {
+                  return index;
+                }
+                if (expr.includes("@item")) {
+                  const r = eval(expr.replace("@", ""));
+                  return r;
+                }
+                return expr;
+              })
+              rt += t;
+            })
+            return rt;
+          });
+          return processedText;
+
+        }
+      },
       ifLogic: {
         replace(str: string, context: any, key?: string, nameMapping?) {
           // const match = /#['"]%%#if ([\s\S]*?)%%['"]/g;
