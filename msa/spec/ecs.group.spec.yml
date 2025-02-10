@@ -102,20 +102,22 @@ Parameters:
     Type: Number
 
 Metadata:
-  - Parameters:
-      - PayType
-      - PayPeriodUnit
-      - PayPeriod
-    Label:
-      default: 付费类型配置
-  - Parameters:
-      - EcsInstanceType
-      - InstancePassword
-    Label:
-      default: 资源配置
-  - Parameters:
-      - ZoneId
-      - VpcId
-      - VSwitchId
-    Label:
-      default: 可用区配置
+  'ALIYUN::ROS::Interface':
+    ParameterGroups:
+      - Parameters:
+          - PayType
+          - PayPeriodUnit
+          - PayPeriod
+        Label:
+          default: 付费类型配置
+      - Parameters:
+          - EcsInstanceType
+          - InstancePassword
+        Label:
+          default: 资源配置
+      - Parameters:
+          - ZoneId
+          - VpcId
+          - VSwitchId
+        Label:
+          default: 可用区配置
