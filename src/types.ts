@@ -15,11 +15,19 @@ export interface EngineContext {
   };
   data: Record<string, any>;
   resultYamlString: string;
+  serviceJson: Record<string, any>;
 }
 
 export interface Composor {
   [key: string]: ComposorItem;
 }
+
+export type Services = Record<string, {
+  Backend: {
+    Component: string;
+    Parameters: Record<string, any>;
+  }
+}[]>
 
 export interface ComposorItem {
   Component: string;

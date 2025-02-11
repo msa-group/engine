@@ -80,6 +80,13 @@ class Component {
       });
       obj[key] = value;
     });
+    findKeyBy(res, keywords.Ref, (obj, key) => {
+      const value = obj[key];
+        const isInMergedNames = get(this.templateNameMapToMergedName, value) || get(this.nameMapping,value);
+        if (isInMergedNames) {
+          obj[key] = isInMergedNames;
+        }
+    })
 
     if (implicitDependsOn.length > 0) {
       others.DependsOn = [...new Set([...(others.DependsOn || []), ...implicitDependsOn])];

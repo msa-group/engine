@@ -7,6 +7,9 @@ fetch("https://api.devsapp.cn/v3/packages/static-website-oss/release/latest?pack
 .then(({ body }) => {
   const { syaml } = body;
   const msaEngine = new MsaEngine();
+
+  // 获取资源的 spec 以及 spec 对应的类型映射
+  const { specs, specMapping } = msaEngine.getSpec(syaml);
   // You can register your own helper here
   // msaEngine.registerHelper({
   //   Log: (...arg) => {
@@ -14,7 +17,10 @@ fetch("https://api.devsapp.cn/v3/packages/static-website-oss/release/latest?pack
   //   }
   // })
 
-  msaEngine.parse(syaml, { Name: "nextchat-web-test" }).then((parseEngine) => {
+  msaEngine.parse(syaml, { 
+    Global: {},
+    Parameters: {},
+   }).then((parseEngine) => {
     const rosYAML = parseEngine.create();
     const arcSpec = parseEngine.getOperations();
       console.log('rosYAML', rosYAML);

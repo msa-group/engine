@@ -1,5 +1,6 @@
 node_modules/
 dist/
 src/buildin-components/*
+src/buildin-spec/index.js
 package-lock.json
 lib/
