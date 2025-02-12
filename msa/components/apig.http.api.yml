@@ -7,3 +7,38 @@ HttpApi:
     Type: Http
     BasePath: {{Default(Parameters.BasePath, '/')}}
     Protocols: '["HTTP", "HTTPS"]'
+
+{{#each Default(Parameters.Routes, [])}}
+# 路由配置
+Route{{index}}:
+  Type: ALIYUN::APIG::Route
+  Properties:
+    HttpApiId: {{RosOutput(HttpApi, "HttpApiId")}}
+    RouteName: {{item.Operation.Name}}
+    EnvironmentInfo: '{"EnvironmentId": "{{Parameters.EnvironmentId}}"}'
+    Match: '{"Path": {"Type":"{{GetOperationPath(item.Operation, "type")}}", "Value": "{{GetOperationPath(item.Operation, "value")}}"}}'
+    Backend: {{RosRouterServices(item.Operation.Services, item.Operation.Scene)}}
+# 路由发布
+PublishRoute{{index}}:
+  DependsOn:
+    - Route
+  Type: ALIYUN::APIG::ApiAttachment
+  Properties:
+    EnvironmentId: {{Parameters.EnvironmentId}}
+    BackendScene: {{item.Operation.Scene}}
+    RouteId:
+      Fn::GetAtt:
+      - Route
+      - RouteId
+    HttpApiId: {{RosOutput(RouteApi, "HttpApiId")}}
+    ServiceConfigs: '[{"ServiceId":"mockServie","Weight":100}]'
+Policy{{index}}:
+  Type: ALIYUN::APIG::Policy
+  Properties:
+    GatewayId: {{Parameters.GatewayId}}
+    EnvironmentId: {{Parameters.EnvironmentId}}
+    PolicyClassName: {{Parameters.PolicyClassName}}
+    PolicyConfig: {{Parameters.PolicyConfig}}
+    AttachResourceIds: {{RosArray(RosOutput(HttpApi, "RouteId"))}}
+    AttachResourceType: "GatewayRoute"
+{{/each}}

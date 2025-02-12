@@ -72,8 +72,9 @@ class ParserRules {
 
     this.rule = {
       eachLoop: {
-        replace(str: string, context: any, key?: string, nameMapping?) {
+        replace(str: string, context: any, key?: string, nameMapping?, addIndent = false) {
           const eachBlockRegex = /#["']#%%#each\s+(.+?)%%["']([\s\S]*?)#["']#%%\/each%%["']/g;
+          let indent = 0;
           // 处理 #each 块
           const processedText = str.replace(eachBlockRegex, (match, expr, loopTemplate) => {
             const withContextPrefix = addContextPrefix(expr, nameMapping);
@@ -83,11 +84,14 @@ class ParserRules {
             res.forEach((item, index) => {
               const t = loopTemplate.replace(/["']#%%([\s\S]*?)%%["']/g, (match, p1) => {
                 const withContextPrefix = addContextPrefix(p1, nameMapping);
-
                 if (withContextPrefix === "index") {
                   return index;
                 }
-                return eval(withContextPrefix);
+                const res = eval(withContextPrefix);
+                if (typeof res === 'string' && addIndent) {
+                  indent = getIndent(str, index);
+                }
+                return UtilsHelper.JSONStringify(res, indent);
               })
               rt += t;
             })

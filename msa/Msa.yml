@@ -1,4 +1,5 @@
 Composer:
+  
   Backend:
     Component: fc3
     Properties:
@@ -16,42 +17,34 @@ Composer:
       Port: 80
       AddressesName: {{RosOutputHostName(Backend.HttpTrigger, "UrlIntranet")}}
       Name: {{Subfix(Join([Parameters.Name, '-','svc']))}}
-  RouteApi:
-    Component: apig.http.api
-    Parameters:
-      ApiName: {{Subfix(Join([Parameters.Name, '-','http']))}}
-  HttpRoute:
+
+  HttpApi:
     DependsOn:
       - Service
-      - RouteApi
-    Component: apig.route
-    Operation:
-      ApiId: {{RosOutput(RouteApi, "HttpApiId")}}
-      Name: {{Parameters.Name}}
-      Path: 'Prefix /'
-      Scene: SingleService
-      Services:
-        - ServiceId: {{RosOutput(Service, "ServiceId")}}
-          Protocol: HTTP
-          Weight: 100
-  HttpRewritePolicy:
-    DependsOn: HttpRoute
-    Component: apig.router.policy
+    Component: apig.http.api 
     Parameters:
-      PolicyClassName: "HttpRewrite"
-      PolicyConfig:
-        Fn::Sub:
-          - '{"pathType":"Prefix","host":"${HOST}","enable":true}'
-          - HOST: {{RosOutputHostName(Backend.HttpTrigger, "UrlIntranet")}}
-      RouteIds:
-        - {{RosOutput(HttpRoute, "RouteId")}}
+      ApiName: {{Subfix(Join([Parameters.Name, '-','http']))}}
+      Routes:
+        - Operation:
+            Name: {{Parameters.Name}}
+            Path: 'Prefix /'
+            Scene: SingleService
+            Services:
+              - ServiceId: {{RosOutput(Service, "ServiceId")}}
+                Protocol: HTTP
+                Weight: 100
+          PolicyClassName: "HttpRewrite"
+          PolicyConfig:
+            Fn::Sub:
+              - '{"pathType":"Prefix","host":"${HOST}","enable":true}'
+              - HOST: {{RosOutputHostName(Backend.HttpTrigger, "UrlIntranet")}}
   KeyAuthPlugin:
-    DependsOn: HttpRoute
+    DependsOn: HttpApi
     Component: apig.router.plugin
     Parameters:
       PluginClassId: pls-cqebrgh4ckt6ppatmprx
       RouteIds:
-        - {{RosOutput(HttpRoute, "RouteId")}}
+        - {{RosOutput(HttpApi, "RouteId")}}
       PluginConfig: |
         consumers:
         - credential: 2bda943c-ba2b-11ec-ba07-00163e1250b5

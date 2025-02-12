@@ -57,8 +57,8 @@ export const getRosHelper = () => {
       return temp;
     },
     RosArray: (arr: any[]) => {
-      const arrStr = arr.map((_item, i) => `\${item${i + 1}}`);
-      const res = arr.reduce((acc, item, i) => {
+      const arrStr = toNotEmptyArray(arr).map((_item, i) => `\${item${i + 1}}`);
+      const res = toNotEmptyArray(arr).reduce((acc, item, i) => {
         return {
           ...acc,
           [`item${i + 1}`]: item,
