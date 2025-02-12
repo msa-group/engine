@@ -7,6 +7,7 @@ Parameters:
     Label:
       zh-cn: 函数的运行时环境
       en: 
+    Default: custom-container
     AllowedValues:
       - custom-container
       - custom.debian10
@@ -32,13 +33,14 @@ Parameters:
     Type: String
     Description:
       en: The handler of the function.
+    Default: index.handler
     Label:
       zh-cn: 函数执行的入口
       en: Handler
   Cpu:
     Description:
       en: The CPU size of the function in vCPU as a multiple of 0.05 vCPU. The minimum value is 0.05 and the maximum value is 16. At the same time, the ratio of cpu to memorySize (in GB) should be between 1:1 and 1:4.
-    Default: Null
+    Default: 1
     Required: false
     MaxValue: 16
     Label:
@@ -49,8 +51,8 @@ Parameters:
   MemorySize:
     Description:
       en: The memory size of the function, in MB.
-    Default: Null
     Required: false
+    Default: 1024
     MaxValue: 65536
     Label:
       zh-cn: 函数的内存规格
@@ -58,7 +60,7 @@ Parameters:
     MinValue: 128
     Type: Number
   DiskSize:
-    Default: Null
+    Default: 512
     Required: false
     Type: Number
     Description:
@@ -69,7 +71,7 @@ Parameters:
   Timeout:
     Description:
       en: The timeout of the function.
-    Default: Null
+    Default: 6
     Required: false
     MaxValue: 86400
     Label:
@@ -80,7 +82,7 @@ Parameters:
   InstanceConcurrency:
     Description:
       en: The maximum number of concurrent instances of the function.
-    Default: Null
+    Default: 10
     Required: false
     MaxValue: 100
     Label:
