@@ -83,11 +83,13 @@ class ParserRules {
             let rt = "";
             res.forEach((item, index) => {
               const t = loopTemplate.replace(/["']#%%([\s\S]*?)%%["']/g, (match, p1) => {
+                context.item = item;
                 const withContextPrefix = addContextPrefix(p1, nameMapping);
                 if (withContextPrefix === "index") {
                   return index;
                 }
                 const res = eval(withContextPrefix);
+                Reflect.deleteProperty(context, 'item');
                 if (typeof res === 'string' && addIndent) {
                   indent = getIndent(str, index);
                 }

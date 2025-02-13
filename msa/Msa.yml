@@ -25,29 +25,16 @@ Composer:
     Parameters:
       ApiName: {{Subfix(Join([Parameters.Name, '-','http']))}}
       Routes:
-        - Operation:
-            Name: {{Parameters.Name}}
-            Path: 'Prefix /'
-            Scene: SingleService
-            Services:
-              - ServiceId: {{RosOutput(Service, "ServiceId")}}
-                Protocol: HTTP
-                Weight: 100
+        - Name: {{Parameters.Name}}
+          Path: 'Prefix /'
+          Scene: SingleService
+          Services:
+            - ServiceId: {{RosOutput(Service, "ServiceId")}}
+              Protocol: HTTP
+              Weight: 100
           PolicyClassName: "HttpRewrite"
           PolicyConfig:
             Fn::Sub:
               - '{"pathType":"Prefix","host":"${HOST}","enable":true}'
               - HOST: {{RosOutputHostName(Backend.HttpTrigger, "UrlIntranet")}}
-  KeyAuthPlugin:
-    DependsOn: HttpApi
-    Component: apig.router.plugin
-    Parameters:
-      PluginClassId: pls-cqebrgh4ckt6ppatmprx
-      RouteIds:
-        - {{RosOutput(HttpApi, "RouteId")}}
-      PluginConfig: |
-        consumers:
-        - credential: 2bda943c-ba2b-11ec-ba07-00163e1250b5
-          name: consumer1
-        keys:
-        - x-api-key
+  

@@ -14,23 +14,23 @@ Route{{index}}:
   Type: ALIYUN::APIG::Route
   Properties:
     HttpApiId: {{RosOutput(HttpApi, "HttpApiId")}}
-    RouteName: {{item.Operation.Name}}
+    RouteName: {{item.Name}}
     EnvironmentInfo: '{"EnvironmentId": "{{Parameters.EnvironmentId}}"}'
-    Match: '{"Path": {"Type":"{{GetOperationPath(item.Operation, "type")}}", "Value": "{{GetOperationPath(item.Operation, "value")}}"}}'
-    Backend: {{RosRouterServices(item.Operation.Services, item.Operation.Scene)}}
+    Match: '{"Path": {"Type":"{{GetOperationPath(item, "type")}}", "Value": "{{GetOperationPath(item, "value")}}"}}'
+    Backend: {{RosRouterServices(item.Services, item.Scene)}}
 # 路由发布
 PublishRoute{{index}}:
   DependsOn:
-    - Route
+    - {{Join(["Route", index])}}
   Type: ALIYUN::APIG::ApiAttachment
   Properties:
     EnvironmentId: {{Parameters.EnvironmentId}}
-    BackendScene: {{item.Operation.Scene}}
+    BackendScene: {{item.Scene}}
     RouteId:
       Fn::GetAtt:
-      - Route
+      - {{Join(["Route", index])}}
       - RouteId
-    HttpApiId: {{RosOutput(RouteApi, "HttpApiId")}}
+    HttpApiId: {{RosOutput(HttpApi, "HttpApiId")}}
     ServiceConfigs: '[{"ServiceId":"mockServie","Weight":100}]'
 Policy{{index}}:
   Type: ALIYUN::APIG::Policy
@@ -39,6 +39,19 @@ Policy{{index}}:
     EnvironmentId: {{Parameters.EnvironmentId}}
     PolicyClassName: {{Parameters.PolicyClassName}}
     PolicyConfig: {{Parameters.PolicyConfig}}
-    AttachResourceIds: {{RosArray(RosOutput(HttpApi, "RouteId"))}}
+    AttachResourceIds: {{RosArray(RosOutput(Join(["Route", index]), "RouteId"))}}
     AttachResourceType: "GatewayRoute"
+KeyAuthPlugin{{index}}:
+    DependsOn: HttpApi
+    Component: apig.router.plugin
+    Parameters:
+      PluginClassId: pls-cqebrgh4ckt6ppatmprx
+      RouteIds:
+        - {{RosOutput(Join(["Route", index]), "RouteId")}}
+      PluginConfig: |
+        consumers:
+        - credential: 2bda943c-ba2b-11ec-ba07-00163e1250b5
+          name: consumer1
+        keys:
+        - x-api-key
 {{/each}}
