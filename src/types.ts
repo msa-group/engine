@@ -13,7 +13,7 @@ export interface EngineContext {
     main: Record<string, any>;
     dependencies: Record<string, any>;
   };
-  data: Record<string, any>;
+  data: any;
   resultYamlString: string;
   serviceJson: Record<string, any>;
 }
@@ -45,6 +45,6 @@ export interface ComposerData {
   props: Record<string, any>;
   dependsOn: string[];
   parameters: Record<string, any>;
-  operation: Record<string, any>;
+  operation?: Record<string, any>;
   componentName: string;
 }

@@ -32,26 +32,49 @@ PublishRoute{{index}}:
       - RouteId
     HttpApiId: {{RosOutput(HttpApi, "HttpApiId")}}
     ServiceConfigs: '[{"ServiceId":"mockServie","Weight":100}]'
-Policy{{index}}:
+{{#each Default(item.Policies, [])}}
+Policy{{Join([item.parent.index, index])}}:
+  DependsOn:
+      - {{Join(["Policy", item.parent.index, index])}}
   Type: ALIYUN::APIG::Policy
   Properties:
     GatewayId: {{Parameters.GatewayId}}
     EnvironmentId: {{Parameters.EnvironmentId}}
-    PolicyClassName: {{Parameters.PolicyClassName}}
-    PolicyConfig: {{Parameters.PolicyConfig}}
+    PolicyClassName: {{item.PolicyClassName}}
+    PolicyConfig: {{item.PolicyConfig}}
     AttachResourceIds: {{RosArray(RosOutput(Join(["Route", index]), "RouteId"))}}
     AttachResourceType: "GatewayRoute"
-KeyAuthPlugin{{index}}:
-    DependsOn: HttpApi
-    Component: apig.router.plugin
-    Parameters:
-      PluginClassId: pls-cqebrgh4ckt6ppatmprx
-      RouteIds:
-        - {{RosOutput(Join(["Route", index]), "RouteId")}}
-      PluginConfig: |
-        consumers:
-        - credential: 2bda943c-ba2b-11ec-ba07-00163e1250b5
-          name: consumer1
-        keys:
-        - x-api-key
+{{/each}}
+{{#if item.PluginClassId}}
+Plugin{{index}}:
+  Type: ALIYUN::APIG::Plugin
+  MsaResource: true
+  Properties:
+    GatewayId: {{Parameters.GatewayId}}
+    PluginClassId: {{item.PluginClassId}}
+{{/if}}
+# 插件绑定到路由
+PluginAttachmentToRoute{{index}}:
+  {{#if item.PluginClassId}}
+  DependsOn:
+    - {{Join(['Plugin', index])}}
+  {{/if}}
+  Type: ALIYUN::APIG::PluginAttachment
+  Properties:
+    EnvironmentId: {{Parameters.EnvironmentId}}
+    AttachResourceIds: {{RosArray(RosOutput(Join(["Route", index]), "RouteId"))}}
+    Enable: true
+    PluginInfo:
+      GatewayId: {{Parameters.GatewayId}}
+      PluginId:
+        {{#if item.PluginClassId}}
+        Fn::GetAtt:
+          - {{Join(['Plugin', index])}}
+          - PluginId
+        {{else}}
+          {{item.PluginId}}
+        {{/if}}
+      PluginConfig:
+        Fn::Base64Encode: {{item.PluginConfig}}
+    AttachResourceType: {{Default(item.AttachResourceType, "GatewayRoute") }}
 {{/each}}

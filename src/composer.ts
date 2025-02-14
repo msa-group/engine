@@ -6,10 +6,10 @@ class Composer {
   props: Record<string, any>;
   dependsOn: string[];
   parameters: Record<string, any>;
-  operation: Record<string, any>;
+  operation?: Record<string, any>;
   componentName: string;
 
-  constructor(data: ComposerData, global: GlobalData, specs: Record<string, { spec: string, type: string }>) {
+  constructor(data: ComposerData, global: GlobalData, specs?: Record<string, { spec: string, type: string }>) {
     const localParameters = get(global, `Parameters.${data.name}`, {});
     this.name = data.name;
     this.props = data.props || {};

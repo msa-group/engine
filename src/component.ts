@@ -36,16 +36,17 @@ class Component {
       const isNormalName = dep.split('.').length === 1;
       let name = get(data.nameMapping, dep);
       if (typeof name === "object") {
-        name = Object.values(name).filter(Boolean);
+        name = [...new Set(Object.values(name).filter(Boolean))];
       }
       if (!name) {
         name = get(data.nameMapping[data.parent.name], dep);
         if (typeof name === "object") {
-          name = Object.values(name).filter(Boolean);
+          name = [...new Set(Object.values(name).filter(Boolean))];
         }
       }
       return name ? name : isNormalName ? dep : undefined;
     }).flat(1).filter(Boolean);
+
     this.localJson = data.localJson;
     this.templateNameMapToMergedName = data.nameMapping[data.parent.name] || {};
     this.nameMapping = data.nameMapping || {};

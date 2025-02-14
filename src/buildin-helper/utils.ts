@@ -38,8 +38,8 @@ export const getUtilsHelper = () => {
           return s;
         }
         try {
-          JSON.parse(value);
-          return JSON.stringify(value);
+          // JSON.parse(value);
+          return JSON.stringify(JSON.parse(value));
         } catch (error) {
           return value;
         }

@@ -5,10 +5,10 @@ Function:
     Handler: 'index.handler'
     Description: 'create by ros'
     FunctionName: {{Parameters.Name}}
-    MemorySize: '1024'
-    DiskSize: '512'
+    MemorySize: {{Parameters.Memory || 1024}}
+    DiskSize: 512
     Runtime: 'custom-container'
-    Cpu: 1
+    Cpu: {{Parameters.Cpu || 2}}
     InternetAccess: true
 
 HttpTrigger:

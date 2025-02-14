@@ -3,10 +3,10 @@ import Handlebars from "handlebars";
 import { get, isEmpty } from "lodash";
 import { pipe } from "lodash/fp";
 import ParseEngine from "./parseEngine";
-import ParserRules from "./parserRules";
+import ParserRules, { addContextPrefix } from "./parserRules";
 import { mergeName, sortByDependsOn } from "./utils";
 import { getBuildInHelper } from './buildin-helper';
-import log from "./log";
+// import log from "./log";
 import Composer from "./composer";
 import Component from "./component";
 import buildinComponents from './buildin-components';
@@ -15,7 +15,7 @@ import buildinSpec from './buildin-spec';
 import { specMapping } from "./buildin-spec/mapping";
 
 
-import type { Composor, Services, EngineContext, GlobalData, IGlobalDefaultParameters, ParseOptions } from "./types";
+import type { Composor, EngineContext, GlobalData, ParseOptions } from "./types";
 
 class Engine {
 
@@ -74,67 +74,223 @@ Resources:`,
     this.buildinHelpers = { ...buildinHelpersInst, ...this.registeredHelper }
     return new Promise(async (resolve, reject) => {
       try {
-        await this.#preparse(str, { parameters, isComposer: true });
-        // 将特殊处理后的模版交给 js-yaml load 解析出 json 格式数据
-        this.#parseAsYaml();
-        this.#createContextData();
-        this.#parseAsHandlebars();
-        this.#createContextData(false);
-        const parseEngine = new ParseEngine(this.context);
+        await this.#parserNameMapping(str, { parameters });
+        this.#parserMainYaml(str, { parameters });
+        const parseEngine = new ParseEngine(this.context, this.nameMapping);
         resolve(parseEngine);
+        // console.log()
+        // resolve(this.context.resultYamlString)
       } catch (error) {
-        reject(error);
+        console.log(error)
       }
     });
   }
 
-  async #preparse(text: string, config: { isComposer: boolean, parameters: Record<string, any> }) {
-    let preparedText = text;
+  async #parserNameMapping(text: string, config: { parameters: Record<string, any> }) {
+
+    const globalParameters = get(config, 'parameters.Global', {});
+    const inLocalParameters = get(config, 'parameters.Parameters', {});
+    const contextData = {
+      Parameters: {
+        ...globalParameters,
+        ...inLocalParameters,
+      },
+      ...this.buildinHelpers,
+    }
+    this.context.data = {
+      ...this.context.data,
+      ...contextData,
+    }
+
+    const a = this.rules.preparsRules[0].replace(text);
+    const b = jsYaml.load(a).Composer || {};
+    const keys = Object.keys(b);
+
+    let preparedText = this.rules.rule.C.replace(text, contextData, undefined, undefined, undefined, keys);
     for (const rule of this.rules.preparsRules) {
       preparedText = rule.replace(preparedText);
     }
-    const globalParameters = get(config, 'parameters.Global', {});
-    const inLocalParameters = get(config, 'parameters.Parameters', {});
-    if (config.isComposer) {
-      // 将外部传入的 Global Parameter 合并至 this.context.data 中
-      const contextData = {
-        Parameters: {
-          ...globalParameters,
-          ...inLocalParameters,
+    const composerJson = jsYaml.load(preparedText);
+    // this.context.templateText.main = preparedText;
+    this.#analyzeTemplate(composerJson);
+    this.#parseSubTemplate(composerJson);
+
+  }
+
+
+  async #parserMainYaml(str, parameters: any) {
+    const params = {
+      ...get(parameters, 'Global', {}),
+    }
+    Object.assign(this.context.data.Parameters, params);
+    const composerYaml = this.rules.rule.B.replace(str, { ...this.context.data, ...this.nameMapping }, "Composer", this.nameMapping);
+    const composerJson = jsYaml.load(composerYaml);
+    this.context.templateJson.main = composerJson;
+    const sortedByDependsOn = sortByDependsOn(Object.entries(composerJson.Composer || {}));
+    for (const [composerKey, composerContent] of sortedByDependsOn) {
+      const composerData = {
+        name: composerKey,
+        parameters: {
+          ...composerContent.Parameters,
+          ...get(parameters, `Parameters.${composerKey}`, {}),
         },
-        ...this.buildinHelpers,
+        props: composerContent.Properties,
+        dependsOn: composerContent.DependsOn,
+        componentName: composerContent.Component,
       }
-      this.context.data = {
-        ...this.context.data,
-        ...contextData,
-      }
-
-
-      // 先由 handlebars 解析出 Composer 文本中的 if 表达式逻辑
-      const parsedText = pipe(
-        (text) => this.rules.rule.ifLogic.replace(text, contextData),
-        (text) => Handlebars.compile(text, { noEscape: true }),
-      )(preparedText)(contextData);
-
-      const yamlJson = jsYaml.load(parsedText) as Services;
-      this.#analyzeTemplate(yamlJson);
-      this.context.templateText.main = parsedText;
-      await this.#parseSubTemplate(config);
+      const composerInstance = new Composer(composerData, this.context.data);
+      this.#parserComponentYaml(composerInstance, composerContent.Component);
     }
-    return preparedText;
   }
 
-  #mergedGlobalData(defaultParameters: IGlobalDefaultParameters) {
-    if (!defaultParameters) return {};
-    const mergedParameters = {};
-    for (const [key, value] of Object.entries(defaultParameters)) {
-      mergedParameters[key] = value.Default;
+  #parserComponentYaml(composerInstance: Composer, component: string) {
+    const componentText = buildinComponents[component] as string;
+
+    if (composerInstance.parameters?.PluginClassName && !composerInstance.parameters?.PluginClassId) {
+      const plugin = plugins.find(
+        v => v.name === composerInstance.parameters.PluginClassName ||
+          v.alias === composerInstance.parameters.PluginClassName
+      );
+      if (plugin) {
+        composerInstance.parameters.PluginClassId = plugin.id;
+      }
     }
-    return mergedParameters;
+
+    const contextData = { ...this.context.data, Parameters: { ...this.context.data.Parameters, ...composerInstance.parameters }, ...this.nameMapping };
+    let self = this;
+    function hasEachBlock(text) {
+      const positions = getOuterEachBlockPosition(text);
+      return positions.length > 0;
+    }
+    function parseEach(text, context, depth = 0) {
+      // console.log(context.item, 'asd...')
+      const positions = getOuterEachBlockPosition(text);
+      let t = '';
+      if (positions.length) {
+        for (let i = positions.length - 1; i >= 0; i--) {
+          const pos = positions[i];
+          const eachBlock = text.slice(pos.start, pos.end) as string;
+          // if (depth === 0) {
+          //   const otherStartContent = text.slice(0, pos.start);
+          //   const prev = positions[i - 1] ? positions[i-1].end : text.length;
+          //   // console.log(prev)
+          //   const otherEndContent = text.slice(pos.end, prev)
+          //   console.log(otherStartContent, otherEndContent)
+          // }
+          const lines = eachBlock.split('\n');
+          const startEach = lines[0];
+          const content = lines.slice(1, lines.length - 1).join('\n');
+          const match = /{{#each ([\s\S]*?)}}/g;
+          const exp = startEach.replace(match, (m, p) => {
+            return addContextPrefix(p)
+          });
+
+          const arr = eval(exp);
+          if (Array.isArray(arr)) {
+            arr.forEach((item, index) => {
+              const c = self.rules.preparsRules[0].replace(content);
+              if (item?.PluginClassName && !item?.PluginClassId) {
+                const plugin = plugins.find(
+                  v => v.name === item.PluginClassName ||
+                    v.alias === item.PluginClassName
+                );
+                if (plugin) {
+                  item.PluginClassId = plugin.id;
+                }
+              }
+              const contextData = { ...context, item: { ...item, parent: context.parent || {} }, index };
+              const d = self.rules.rule.ifLogic.replace(c, contextData, undefined, self.nameMapping);
+              const e = Handlebars.compile(d)(contextData);
+              const f = self.rules.rule.D.replace(e);
+              const g = removeOuterEachBlock(f);
+              const h = self.rules.rule.parseDoubleCurliesAndEvalCall.replace(g, contextData, undefined, self.nameMapping, true);
+              // console.log(g)
+              // const h = removeOuterEachBlock(g);
+              // const h = self.rules.preparsRules[0].replace(g);
+              const fjson = jsYaml.load(h);
+              for (const [key, value] of Object.entries(fjson)) {
+                // const name = self.rules.rule.parseDoubleCurliesAndEvalCall.replace(key, contextData);
+                // // console.log(name, key, 'zxc...')
+                // self.nameMapping[composerInstance.name][name] = `${composerInstance.name}${name}`
+                // const data = {
+                //   name,
+                //   parent: composerInstance,
+                //   json: value,
+                //   parameters: composerInstance.parameters,
+                //   props: {},
+                //   dependsOn: [],
+                //   localJson: {},
+                //   nameMapping: self.nameMapping,
+                //   deletedMergedName: self.deletedMergedName,
+                //   mergedNames: self.mergedNames,
+                // }
+                // const component = new Component(data);
+                // console.log()
+                // t = t + component.toYaml()[component.mergedName];
+                // const [i, isEach] = parseEach(content, context);
+                // t = t + component.toYaml()[component.mergedName];
+                t = t + jsYaml.dump({ [key]: value });
+              }
+              let i = hasEachBlock(content);
+              if (i) {
+                const [c] = parseEach(content, { ...contextData, parent: { ...contextData.item, index } }, depth + 1);
+                t = t + c;
+              }
+            });
+          }
+        }
+        return [t, true, positions];
+      }
+      return [text, false, positions];
+    }
+    let [t, isEach, positions] = parseEach(componentText, contextData);
+    if (isEach) {
+      positions.forEach(pos => {
+        const matchText = componentText.slice(pos.start, pos.end);
+        t = componentText.replace(matchText, t);
+      })
+    }
+    const c = this.rules.preparsRules[0].replace(t);
+    const b = this.rules.rule.ifLogic.replace(c, contextData, undefined, this.nameMapping);
+    const e = Handlebars.compile(b)(contextData);
+    const f = this.rules.rule.parseDoubleCurliesAndEvalCall.replace(e, contextData, undefined, this.nameMapping);
+    let r = f;
+
+    let h = '';
+    const a = jsYaml.load(f) as Record<string, any>;
+    for (const [name, value] of Object.entries(a)) {
+      self.nameMapping[composerInstance.name][name] = `${composerInstance.name}${name}`
+      const data = {
+        name,
+        parent: composerInstance,
+        json: value,
+        parameters: composerInstance.parameters,
+        props: {},
+        dependsOn: value.DependsOn,
+        localJson: {},
+        nameMapping: self.nameMapping,
+        deletedMergedName: self.deletedMergedName,
+        mergedNames: self.mergedNames,
+      }
+      const componentInstance = new Component(data);
+      h = h + componentInstance.toYaml()[componentInstance.mergedName]
+    }
+    r = h;
+
+    const k = jsYaml.load(r);
+    this.context.templateJson.dependencies[composerInstance.componentName] = k;
+
+    const g = jsYaml.dump(k);
+
+    const indentedYamlText = g
+      .split('\n')
+      .map((line, index) => index === 0 ? line : `  ${line}`)
+      .join('\n');
+    this.context.resultYamlString += `\n  ${indentedYamlText}\n`;
   }
 
-  #analyzeTemplate(yamlJson: any) {
-    const composer = yamlJson.Composer as Composor
+  #analyzeTemplate(composerJson) {
+    const composer = composerJson.Composer as Composor
     if (!composer) return {};
     for (const [key, value] of Object.entries(composer)) {
       this.context.templateText.dependencies[key] = value.Component;
@@ -142,287 +298,62 @@ Resources:`,
     return this.context.templateText.dependencies;
   }
 
-
-
-  // #analyzeTemplateByService(services: Services) {
-  //   const serivces = get(services, "Service", []);
-
-  //   const mergedNameServices = {} as Record<string, any>
-  //   for (const [key, value] of Object.entries(serivces)) {
-  //     const currentParams = get(this.context.data.Parameters, key, {});
-  //     const currentBackend = value.find(v => {
-  //       return v.Backend?.Component === currentParams.Component
-  //     });
-  //     if (!currentBackend) continue;
-
-  //     for (const [name, componentValue] of Object.entries(currentBackend)) {
-  //       mergedNameServices[`${key}${name}`] = componentValue;
-  //     }
-  //     this.context.serviceJson = mergedNameServices;
-  //   }
-  //   for (const [key, value] of Object.entries(mergedNameServices)) {
-  //     this.context.templateText.dependencies[key] = value.Component;
-  //   }
-  //   return this.context.templateText.dependencies;
-  // }
-
-  async #parseSubTemplate(config: { parameters: Record<string, any>, isComposer: boolean }) {
+  async #parseSubTemplate(composerJson: any) {
     const dependencies = this.context.templateText.dependencies;
     for (const [key, value] of Object.entries(dependencies)) {
-      const template = buildinComponents[value];
-      this.context.templateText.dependencies[key] = await this.#preparse(template, { ...config, isComposer: false });
-    }
-  }
-
-  #parseAsYaml() {
-    try {
-      const mainText = this.context.templateText.main;
-      const mainYamlToJson = jsYaml.load(mainText);
-      this.globalData.Parameters = {
-        ...this.#mergedGlobalData(mainYamlToJson.Parameters || {}),
-        ...this.context.data.Parameters,
-      };
-      this.context.templateJson.main = mainYamlToJson;
-      this.#parseSubYamlTemplate();
-    } catch (error) {
-      log.error('Error parsing yaml template:', error);
-      throw error;
-    }
-  }
-
-  #parseSubYamlTemplate() {
-    const dependencies = this.context.templateText.dependencies;
-    for (const [key, text] of Object.entries(dependencies)) {
-      const data = this.context.templateJson.main.Composer[key];
-      // 判断是否有 PluginClassName 并且没有  PluginClassId  
-      // 将 PluginClassName 映射到 PluginClassId
-      if (data?.Parameters?.PluginClassName && !data?.Parameters?.PluginClassId) {
-        const plugin = plugins.find(
-          v => v.name === data.Parameters.PluginClassName ||
-            v.alias === data.Parameters.PluginClassName
-        );
-        if (plugin) {
-          data.Parameters.PluginClassId = plugin.id;
-        }
-      }
-      const parameters = {
-        ...get(this.globalData, 'Parameters', {}),
-        ...get(data, 'Parameters', {}),
-      }
-      const t = pipe(
-        (text) => this.rules.rule.ifLogic.replace(text, {
-          Parameters: parameters,
-          ...this.buildinHelpers,
-        }),
-        (text) => Handlebars.compile(text, { noEscape: true }),
-      )(text)({ Parameters: parameters });
-      const yamlToJson = jsYaml.load(t);
-      this.context.templateJson.dependencies[key] = yamlToJson;
-      this.context.templateText.dependencies[key] = t;
-    }
-  }
-
-  #createContextData(init = true) {
-    this.context.data = {};
-    const sortedByDependsOn = sortByDependsOn(Object.entries(this.context.templateJson.main?.Composer || {}));
-    for (const [key, value] of sortedByDependsOn) {
-      const inContextData = this.context.data[key];
+      const msa = composerJson.Composer[key];
       const data = {
         name: key,
-        parameters: value.Parameters,
-        props: inContextData ? inContextData.props : value.Properties,
-        dependsOn: value.DependsOn,
-        operation: inContextData ? inContextData.operation : value.Operation,
-        componentName: value.Component,
+        parameters: msa.Parameters,
+        props: msa.Properties,
+        dependsOn: msa.DependsOn,
+        componentName: msa.Component,
       }
-      const composerInstance = new Composer(data, this.globalData, this.specs);
-      const dependencies = this.context.templateJson.dependencies;
-      const currentDependencies = dependencies[key];
-      if (!currentDependencies) continue;
-      const sortedDependencies = sortByDependsOn(Object.entries(currentDependencies));
-      for (const [key, value] of sortedDependencies) {
-        const tempData = {
-          name: key,
-          parent: composerInstance,
-          json: value,
-          parameters: composerInstance.parameters,
-          props: composerInstance.props?.[key] || {},
-          dependsOn: value.DependsOn,
-          localJson: currentDependencies,
-          nameMapping: this.nameMapping,
-          deletedMergedName: this.deletedMergedName,
-          mergedNames: this.mergedNames,
-          operation: composerInstance.operation,
-          componentName: composerInstance.componentName,
-        }
-        const componentInstance = new Component(tempData);
-        if (this.context.data[composerInstance.name]) {
-          this.context.data[composerInstance.name].children.push(componentInstance);
-        } else {
-          this.context.data[composerInstance.name] = {
-            ...composerInstance,
-            children: [
-              componentInstance,
-            ],
-          }
-        }
-        if (init) {
-          if (this.nameMapping[composerInstance.name]) {
-            this.nameMapping[composerInstance.name][componentInstance.name] = componentInstance.mergedName;
-            if (componentInstance.isResource) {
-              // __resource__ 标记该资源为主资源
-              this.nameMapping[composerInstance.name]['__resource__'] = componentInstance.mergedName;
-            }
-          } else {
-            this.nameMapping[composerInstance.name] = {
-              [componentInstance.name]: componentInstance.mergedName,
-            }
-            if (componentInstance.isResource) {
+      const composerInstance = new Composer(data, this.globalData);
 
-              this.nameMapping[composerInstance.name]['__resource__'] = componentInstance.mergedName;
-            }
-          }
-          this.mergedNames.add(mergeName(composerInstance.name, componentInstance.name));
+      const template = buildinComponents[value] as string;
+      let t = removeOuterEachBlock(template);
 
-        } else {
-          const yamlText = componentInstance.toYaml()[componentInstance.mergedName];
-          const indentedYamlText = yamlText
-            .split('\n')
-            .map((line, index) => index === 0 ? line : `  ${line}`)
-            .join('\n');
-          this.context.resultYamlString += `\n  ${indentedYamlText}\n`;
-        }
+      for (const rule of this.rules.preparsRules) {
+        t = rule.replace(t);
       }
 
-    }
-  }
-
-  #createOperationContext(operation: Record<string, any>) {
-    if (!operation || isEmpty(operation)) return operation;
-    const [pathType, pathValue] = (operation.Path || "").split(" ");
-    const temp = {
-      PathType: pathType,
-      PathValue: pathValue,
-      ...operation,
-    }
-    return temp;
-  }
-
-  #parseAsHandlebars() {
-    this.context.templateJson.dependencies = [];
-    const resultWithoutParseParametersList: ([string, string])[] = [];
-    const mainYamlText = this.rules.rule.parseDoubleCurliesAndEvalCall.replace(
-      this.context.templateText.main,
-      {
-        Parameters: this.globalData.Parameters,
-        ...this.buildinHelpers,
-        ...this.nameMapping,
-      },
-      'Composer',
-      this.nameMapping,
-    );
-
-
-    const mainYamlToJson = jsYaml.load(mainYamlText);
-    this.context.templateJson.main = mainYamlToJson;
-    this.context.templateText.main = mainYamlText;
-    const sortedByDependsOn = sortByDependsOn(Object.entries(this.context.templateJson.main?.Composer || {}));
-
-    for (const [key, value] of sortedByDependsOn) {
-
-      const props = value.Properties
-      const operation = value.Operation || {};
-      const data = {
-        name: key,
-        parameters: value.Parameters,
-        props: props,
-        dependsOn: value.DependsOn,
-        operation: this.#createOperationContext(operation),
-        componentName: value.Component,
-      }
-      const composerInstance = new Composer(data, this.globalData, this.specs);
-      if (this.context.data[key]) {
-        this.context.data[key] = {
-          ...this.context.data[key],
-          ...composerInstance,
-        }
-        this.context.templateJson.main
-      } else {
-        this.context.data[key] = composerInstance;
-      }
-    }
-
-
-    for (const [key, value] of Object.entries(this.context.templateText.dependencies)) {
-      const currentData = this.context.data[key];
-      if (!currentData) {
-        continue;
-      }
-
-      if (!currentData.children) continue;
-      const local = currentData.children.reduce((acc, child) => {
-        acc[child.name] = child.json;
-        return acc;
-      }, {});
-
-
-      const replaceContext = {
-        Parameters: currentData.parameters,
-        Operation: currentData.operation,
-        Local: local,
-        ...this.buildinHelpers,
-        ...this.nameMapping,
-      }
-
-      const text = pipe(
-        (text) => this.rules.rule.eachLoop.replace(text, replaceContext, key, this.nameMapping),
-        (text) => this.rules.rule.parseDoubleCurliesAndEvalCall.replace(text, replaceContext, key, this.nameMapping, true),
-      )(value);
+      const contextData = { ...this.context.data, Parameters: { ...this.context.data.Parameter, ...composerInstance.parameters } }
 
       const parsedText = pipe(
-        this.rules.rule.templateWithAnnotationToHandlebars.replace,
-        (text) => this.rules.rule.parseDoubleCurliesAndEvalCall.replace(text, replaceContext),
-      )(text);
+        (text) => this.rules.rule.ifLogic.replace(text, contextData),
+        (text) => Handlebars.compile(text, { noEscape: true }),
+      )(t)(contextData);
 
-      // 根据新生成的模版重新生成 nameMapping
-      resultWithoutParseParametersList.push([key, parsedText]);
-      this.context.templateJson.dependencies[key] = jsYaml.load(parsedText);
-    }
+      const componentJson = jsYaml.load(parsedText) as Record<string, any>;
 
-    for (const [key, value] of Object.entries(this.context.templateJson.dependencies)) {
-      const newTemplateNames = Object.keys(value);
+      for (const [componentKey, value] of Object.entries(componentJson)) {
 
-      for (const [name] of Object.entries(this.nameMapping[key])) {
-        if (!newTemplateNames.includes(name)) {
-          this.deletedMergedName.add(mergeName(key, name));
-          // throw new ParserError(`${name} 在 ${key} 中不存在`);
-          this.nameMapping[key][name] = false
+        const component = {
+          name: componentKey,
+          mergedName: mergeName(key, componentKey),
+          isResource: value.MsaResource,
         }
+
+        if (this.nameMapping[composerInstance.name]) {
+          this.nameMapping[composerInstance.name][component.name] = component.mergedName;
+          if (component.isResource) {
+            // __resource__ 标记该资源为主资源
+            this.nameMapping[composerInstance.name]['__resource__'] = component.mergedName;
+          }
+        } else {
+          this.nameMapping[composerInstance.name] = {
+            [component.name]: component.mergedName,
+          }
+          if (component.isResource) {
+
+            this.nameMapping[composerInstance.name]['__resource__'] = component.mergedName;
+          }
+        }
+        this.mergedNames.add(mergeName(composerInstance.name, component.name));
       }
     }
-  }
 
-  getServiceSpec(str: string) {
-    let preparedText = str;
-    for (const rule of this.rules.preparsRules) {
-      preparedText = rule.replace(preparedText);
-    }
-
-    const json = jsYaml.load(preparedText);
-    const services = json.Service as Record<string, { Backend: { Component: string } }[]>;
-    const serviceSpec = {};
-
-    for (const [key, value] of Object.entries(services)) {
-      const serviceName = key;
-      const serviceOptions = value.map((v) => {
-        return {
-          name: v.Backend.Component,
-          spec: buildinSpec[v.Backend.Component] || ""
-        }
-      });
-      serviceSpec[serviceName] = serviceOptions;
-    }
-    return serviceSpec;
   }
 
   getSpecs(str: string) {
@@ -450,6 +381,51 @@ Resources:`,
       specs
     };
   }
+
 }
+
+function removeOuterEachBlock(template: string) {
+  let t = template;
+  const positions = getOuterEachBlockPosition(template);
+  if (positions.length) {
+    for (let i = positions.length - 1; i >= 0; i--) {
+      const pos = positions[i];
+      t = t.substring(0, pos.start) + t.substring(pos.end)
+    }
+  }
+
+  return t;
+}
+
+
+function getOuterEachBlockPosition(input: string) {
+  const result = [];
+  const startTag = "{{#each ";
+  const endTag = "{{/each}}";
+
+  let level = 0;
+  let blockStart = null;
+
+  for (let i = 0; i < input.length; i++) {
+    if (input.startsWith(startTag, i)) {
+      if (level === 0) {
+        blockStart = i;
+      }
+      level++;
+      i += startTag.length - 1; // 跳过已匹配的部分
+    } else if (input.startsWith(endTag, i)) {
+      level--;
+      if (level === 0 && blockStart !== null) {
+        result.push({ start: blockStart, end: i + endTag.length });
+        blockStart = null; // 重置开始位置
+      }
+      i += endTag.length - 1; // 跳过已匹配的部分
+    }
+  }
+
+  return result;
+}
+
+
 
 export default Engine;
