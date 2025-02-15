@@ -25,7 +25,9 @@ Composer:
       ApiName: {{Subfix(Join([Parameters.Name, '-','http']))}}
       Routes:
         - Name: {{Parameters.Name}}
-          Path: 'Prefix /'
+          Path:
+            Type: Prefix
+            Value: /
           Scene: SingleService
           Services:
             - ServiceId: {{RosOutput(Service, "ServiceId")}}
