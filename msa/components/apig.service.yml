@@ -4,14 +4,17 @@ Service:
   Properties:
     GatewayId: {{Parameters.GatewayId}}
     ServiceName: {{Parameters.Name}}
+    SourceType: Default(item.SourceType, 'DNS')
+{{#if eq(Parameters.SourceType, 'DNS')}}
     Addresses:
       Fn::Sub:
         - '["${AddressesName}:${Port}"]'
-        - AddressesName: {{Parameters.AddressesName}}
-          Port: {{Parameters.Port}}
-    SourceType: 'DNS'
-
-{{#if or(eq(Parameters.Port, 443), eq(Parameters.Port, 465))}}
+        - AddressesName: {{Parameters.DnsConfig.AddressesName}}
+          Port: {{Parameters.DnsConfig.Port}}
+{{/if}}
+    ServiceConfigs: {{Parameters.ServiceConfigs}}
+    
+{{#if or(eq(Parameters.DnsConfig.Port, 443), eq(Parameters.DnsConfig.Port, 465))}}
 ServiceTlsPolicy:
   Type: ALIYUN::APIG::Policy
   DependsOn:
@@ -29,11 +32,12 @@ ServiceTlsPolicy:
     PolicyConfig:
       Fn::Sub:
         - '{"mode":"SIMPLE","sni":"${HOST}","enable":true}'
-        - HOST: {{Parameters.AddressesName}}
+        - HOST: {{Parameters.DnsConfig.AddressesName}}
     GatewayId: {{Parameters.GatewayId}}
     AttachResourceType: "GatewayService"
 {{/if}}
 
+# TODO: 通过URL链接来判断即可
 {{#if Default(Parameters.IsOSSWebsite, false)}}
 OSSWebsite:
   Type: ALIYUN::OSS::Website

@@ -2,14 +2,14 @@ Function:
   Type: ALIYUN::FC3::Function
   MsaResource: true
   Properties:
-    Handler: 'index.handler'
-    Description: 'create by ros'
+    Handler: {{Parameters.Handler}}
+    Description: {{Parameters.Description}}
     FunctionName: {{Parameters.Name}}
     MemorySize: {{Parameters.Memory || 1024}}
-    DiskSize: 512
-    Runtime: 'custom-container'
+    DiskSize: {{Parameters.Name || 512}}
+    Runtime: {{Parameters.Runtime || custom-container}}
     Cpu: {{Parameters.Cpu || 1}}
-    InternetAccess: true
+    InternetAccess: {{Parameters.InternetAccess || true}}
     CustomContainerConfig: {{Parameters.CustomContainerConfig}}
 
 HttpTrigger:
@@ -20,7 +20,7 @@ HttpTrigger:
       Fn::GetAtt:
         - Function
         - FunctionName
-    TriggerName: httpTrigger
+    TriggerName: {{Parameters.Name || httpTrigger}}
     TriggerConfig: >-
       {"authType":"anonymous","methods":["GET","POST","PUT","DELETE"],"disableURLInternet":false}
     TriggerType: http

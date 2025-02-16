@@ -3,10 +3,8 @@ HttpApi:
   Type: ALIYUN::APIG::HttpApi
   MsaResource: true
   Properties:
-    HttpApiName: {{Parameters.ApiName}}
+    HttpApiName: {{Parameters.Name}}
     Type: Http
-    BasePath: {{Default(Parameters.BasePath, '/')}}
-    Protocols: '["HTTP", "HTTPS"]'
 
 {{#each Default(Parameters.Routes, [])}}
 # 路由配置

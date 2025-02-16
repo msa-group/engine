@@ -68,6 +68,15 @@ Parameters:
     Label:
       zh-cn: 函数的磁盘规格
       en: DiskSize
+  CustomContainerConfig: 
+    Description:
+      en: Custom container configuration. Choose one of Code and CustomContainerConfig.
+    Default: Null
+    Required: false
+    Label:
+      zh-cn: 自定义容器运行时的相关配置
+      en: CustomContainerConfig
+    Type: Json
   Timeout:
     Description:
       en: The timeout of the function.
@@ -116,6 +125,7 @@ Metadata:
           - FunctionName
           - Runtime
           - Handler
+          - CustomContainerConfig
           - EnvironmentVariables
         Label:
           default: 基本设置
