@@ -43,8 +43,9 @@ Policy{{Join([item.parent.index, index])}}:
     AttachResourceIds: {{RosArray(RosOutput(Join(["Route", index]), "RouteId"))}}
     AttachResourceType: "GatewayRoute"
 {{/each}}
-{{#if item.PluginClassId}}
-Plugin{{index}}:
+{{#each Default(item.Plugins, [])}}
+{{#if or(item.PluginClassId, false)}}
+Plugin{{Join([item.parent.index, index])}}:
   Type: ALIYUN::APIG::Plugin
   MsaResource: true
   Properties:
@@ -52,10 +53,10 @@ Plugin{{index}}:
     PluginClassId: {{item.PluginClassId}}
 {{/if}}
 # 插件绑定到路由
-PluginAttachmentToRoute{{index}}:
-  {{#if item.PluginClassId}}
+PluginAttachmentToRoute{{Join([item.parent.index, index])}}:
+  {{#if or(item.PluginClassId, false)}}
   DependsOn:
-    - {{Join(['Plugin', index])}}
+    - {{Join(["Plugin", item.parent.index, index])}}
   {{/if}}
   Type: ALIYUN::APIG::PluginAttachment
   Properties:
@@ -65,9 +66,9 @@ PluginAttachmentToRoute{{index}}:
     PluginInfo:
       GatewayId: {{Parameters.GatewayId}}
       PluginId:
-        {{#if item.PluginClassId}}
+        {{#if or(item.PluginClassId, false)}}
         Fn::GetAtt:
-          - {{Join(['Plugin', index])}}
+          - {{Join(["Plugin", item.parent.index, index])}}
           - PluginId
         {{else}}
           {{item.PluginId}}
@@ -75,4 +76,5 @@ PluginAttachmentToRoute{{index}}:
       PluginConfig:
         Fn::Base64Encode: {{item.PluginConfig}}
     AttachResourceType: {{Default(item.AttachResourceType, "GatewayRoute") }}
+{{/each}}
 {{/each}}
