@@ -16,7 +16,7 @@ Route{{index}}:
     HttpApiId: {{RosOutput(HttpApi, "HttpApiId")}}
     RouteName: {{item.Name}}
     EnvironmentInfo: '{"EnvironmentId": "{{Parameters.EnvironmentId}}"}'
-    Match: '{"Path": {"Type":"{{item.Path.Type}}", "Value": "{{item.Path.value}}"}}'
+    Match: '{"Path": {"Type":"{{item.Path.Type}}", "Value": "{{item.Path.Value}}"}}'
     Backend: {{RosRouterServices(item.Services, item.Scene)}}
 # 路由发布
 PublishRoute{{index}}:

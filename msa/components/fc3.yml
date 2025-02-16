@@ -8,8 +8,9 @@ Function:
     MemorySize: {{Parameters.Memory || 1024}}
     DiskSize: 512
     Runtime: 'custom-container'
-    Cpu: {{Parameters.Cpu || 2}}
+    Cpu: {{Parameters.Cpu || 1}}
     InternetAccess: true
+    CustomContainerConfig: {{Parameters.CustomContainerConfig}}
 
 HttpTrigger:
   Type: ALIYUN::FC3::Trigger

@@ -1,8 +1,8 @@
 Parameters: 
   Region: 'cn-hangzhou'
   Scence: 'key-auth-plugin'
-  GatewayId: gw-cu9g7dem1hkn32ee70bg
-  EnvironmentId: env-cu9g82mm1hkui0vcv5eg
+  GatewayId: gw-cunbie6m1hkohjeuilrg
+  EnvironmentId: env-cunbj26m1hkjrjddmljg
   Name: 'key-auth-plugin'
 ScenceConfigs:
   - Name: 单机版
@@ -10,5 +10,5 @@ ScenceConfigs:
     Url: 'templates/msa.yaml'
     Parameters: 
       Backend:
-        Cpu: 2018
-        Memory: 4096
+        Cpu: 1
+        Memory: 1024
