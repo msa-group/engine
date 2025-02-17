@@ -2,10 +2,8 @@ import { get } from "lodash";
 import { toNotEmptyArray } from "./utils";
 import { findKeyBy } from "./utils";
 import type { EngineContext } from "./types";
-import { getUtilsHelper } from "./buildin-helper/utils";
 import jsYaml from "js-yaml";
 
-const utilsHelper = getUtilsHelper();
 class ParseEngine {
   private context: EngineContext;
   private nameMapping: Record<string, Record<string, string | boolean>> = {};
@@ -64,7 +62,7 @@ class ParseEngine {
                     name = get(obj[key], '0', '');
                   });
                   const component = fullJson[name];
-                  if (component.Type.includes("FC3")) {
+                  if (component?.Type?.includes("FC3")) {
                     componentName = 'fc3';
                   }
                 }
