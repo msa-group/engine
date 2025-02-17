@@ -4,6 +4,7 @@ Namespace:
     NamespaceName: {{Default(Parameters.NamespaceName, Parameters.NamespaceId)}}
     VpcId: {{Parameters.VpcId}}
     NamespaceId: {{Join(Parameters.Region,Parameters.NamespaceId, ":")}}
+    NamespaceDescription: {{Parameters.NamespaceDescription}}
 
 SecurityGroup:
   Type: 'ALIYUN::ECS::SecurityGroup'
@@ -19,6 +20,7 @@ SecurityGroup:
         SourceCidrIp: 0.0.0.0/0
         IpProtocol: tcp
     SecurityGroupName: {{Parameters.AppName}}
+    
 Application:
   Type: ALIYUN::SAE::Application
   DependsOn: Namespace

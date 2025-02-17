@@ -1,0 +1,16 @@
+Parameters:
+  Name:
+    Required: true
+    Type: String
+    Description:
+      zh-cn: 以路由为核心的HTTP接口
+    Label:
+      zh-cn: API名称
+      en: API Name
+  Routes:
+    Required: true
+    Label:
+      zh-cn: 路由配置
+      en: Routers
+    MaxLength: 10
+    Type: Json
