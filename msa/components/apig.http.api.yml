@@ -33,14 +33,14 @@ PublishRoute{{index}}:
 {{#each Default(item.Policies, [])}}
 Policy{{Join([item.parent.index, index])}}:
   DependsOn:
-      - {{Join(["Policy", item.parent.index, index])}}
+      - {{Join(["Route", item.parent.index])}}
   Type: ALIYUN::APIG::Policy
   Properties:
     GatewayId: {{Parameters.GatewayId}}
     EnvironmentId: {{Parameters.EnvironmentId}}
     PolicyClassName: {{item.PolicyClassName}}
     PolicyConfig: {{item.PolicyConfig}}
-    AttachResourceIds: {{RosArray(RosOutput(Join(["Route", index]), "RouteId"))}}
+    AttachResourceIds: {{RosArray(RosOutput(Join(["Route", item.parent.index]), "RouteId"))}}
     AttachResourceType: "GatewayRoute"
 {{/each}}
 {{#each Default(item.Plugins, [])}}
