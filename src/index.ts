@@ -4,7 +4,7 @@ import { get, isEmpty } from "lodash";
 import { pipe } from "lodash/fp";
 import ParseEngine from "./parseEngine";
 import ParserRules, { addContextPrefix } from "./parserRules";
-import { mergeName, sortByDependsOn } from "./utils";
+import { mergeName, removeNullValues, sortByDependsOn } from "./utils";
 import { getBuildInHelper } from './buildin-helper';
 // import log from "./log";
 import Composer from "./composer";
@@ -208,7 +208,8 @@ Resources:`,
               // const h = removeOuterEachBlock(g);
               // const h = self.rules.preparsRules[0].replace(g);
               const fjson = jsYaml.load(h);
-              for (const [key, value] of Object.entries(fjson)) {
+              const removedNullValues = removeNullValues(fjson);
+              for (const [key, value] of Object.entries(removedNullValues)) {
                 // const name = self.rules.rule.parseDoubleCurliesAndEvalCall.replace(key, contextData);
                 // // console.log(name, key, 'zxc...')
                 // self.nameMapping[composerInstance.name][name] = `${composerInstance.name}${name}`
@@ -258,7 +259,8 @@ Resources:`,
 
     let h = '';
     const a = jsYaml.load(f) as Record<string, any>;
-    for (const [name, value] of Object.entries(a)) {
+    const z = removeNullValues(a);
+    for (const [name, value] of Object.entries(z)) {
       self.nameMapping[composerInstance.name][name] = `${composerInstance.name}${name}`
       const data = {
         name,

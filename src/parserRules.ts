@@ -189,6 +189,8 @@ class ParserRules {
             const res = eval(t);
             if (res === undefined) {
               log.warn(`${p1} is undefined in ${key}, Please check you Composer`);
+              // '' 会被 load 成 null， 后续会删除 null 值， 所以这里需要返回 ''
+              return '';
             }
             if (typeof res === 'string' && addIndent) {
               indent = getIndent(str, index);

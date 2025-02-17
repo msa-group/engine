@@ -187,3 +187,32 @@ export function findItemInContextData(data: Record<string, any>, id: string) {
 export function removeFileExtension(fileName) {
   return fileName.replace(/\.[^/.]+$/, '');
 }
+
+export function removeNullValues(obj: Record<string, any>) {
+  // 遍历对象的所有属性
+  for (const key in obj) {
+    if (obj.hasOwnProperty(key)) {
+      const value = obj[key];
+
+      // 如果当前值为 null，直接删除属性
+      if (value === null) {
+        delete obj[key];
+      }
+      // 如果当前值是对象且非 null，递归处理
+      else if (typeof value === "object" && !Array.isArray(value)) {
+        removeNullValues(value); // 递归删除嵌套对象中的 null
+        // 如果子对象处理后变成空对象，可删除父级属性（按需启用下方代码）
+        // if (Object.keys(value).length === 0) delete obj[key];
+      }
+      // 如果当前值是数组，遍历处理数组中的对象元素
+      else if (Array.isArray(value)) {
+        value.forEach(item => {
+          if (typeof item === "object" && item !== null) {
+            removeNullValues(item);
+          }
+        });
+      }
+    }
+  }
+  return obj;
+}
