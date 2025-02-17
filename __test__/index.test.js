@@ -12,7 +12,7 @@ describe("Engine", () => {
     const text = fs.readFileSync("msa/Msa.yml", "utf8");
     const engine = new Engine();
     // engine.getServiceSpec(text);
-    // const specs = engine.getSpecs(text);
+    const specs = engine.getSpecs(text);
 
     const firstScenceParameters = debugConfigJson.ScenceConfigs[0].Parameters;
     // console.log(JSON.stringify(firstScenceParameters))
@@ -24,8 +24,8 @@ describe("Engine", () => {
       Parameters: firstScenceParameters,
     }).then((parseEngine) => {
       const rs = parseEngine.create()
-      console.log(rs);
-      // const opt = parseEngine.getOperations();
+      // console.log(rs);
+      const opt = parseEngine.getRoutesStruct();
       // console.log(opt)
       // fs.writeFileSync(, './c.yml')
       // expect(parseEngine).toBeDefined();
