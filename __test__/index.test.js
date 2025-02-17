@@ -24,7 +24,7 @@ describe("Engine", () => {
       Parameters: firstScenceParameters,
     }).then((parseEngine) => {
       const rs = parseEngine.create()
-      // console.log(rs);
+      console.log(rs);
       const opt = parseEngine.getRoutesStruct();
       // console.log(opt)
       // fs.writeFileSync(, './c.yml')

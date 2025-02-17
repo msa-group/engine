@@ -12,10 +12,7 @@ Service:
         - AddressesName: {{Parameters.DnsConfig.AddressesName}}
           Port: {{Default(Parameters.DnsConfig.Port, 80)}}
 {{/if}}
-
-{{#if or(Parameters.ServiceConfigs, false)}}
     ServiceConfigs: {{Parameters.ServiceConfigs}}
-{{/if}}
 
 {{#if or(eq(Parameters.DnsConfig.Port, 443), eq(Parameters.DnsConfig.Port, 465))}}
 ServiceTlsPolicy:
@@ -40,7 +37,7 @@ ServiceTlsPolicy:
     AttachResourceType: "GatewayService"
 {{/if}}
 
-# TODO: 通过URL链接来判断即可
+# 判断 Parameters.DnsConfig.AddressesName 存在
 {{#if Default(Parameters.IsOSSWebsite, false)}}
 OSSWebsite:
   Type: ALIYUN::OSS::Website
