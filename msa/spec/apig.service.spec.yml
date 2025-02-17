@@ -1,0 +1,45 @@
+Parameters:
+  GatewayId:
+    Required: true
+    Type: String
+    Description:
+      en: The ID of the Cloud Native API Gateway.
+    Label:
+      zh-cn: 网关实例 ID
+      en: GatewayId
+  ServiceName:
+    Required: true
+    Type: String
+    Description:
+      en: The name of the service.
+    Label:
+      zh-cn: 服务名
+      en: ServiceName
+  Addresses:
+    AssociationPropertyMetadata:
+      Parameter:
+        Default: Null
+        Required: false
+        Type: String
+        Description:
+          en: Service Address.
+    Description:
+      en: Service Address List.
+    MinLength: 0
+    Required: true
+    Label:
+      zh-cn: 地址信息
+      en: Addresses
+    MaxLength: 10
+    AssociationProperty: List[Parameter]
+    Type: Json
+  SourceType:
+    Label:
+      zh-cn: 服务来源类型
+      en: SourceType
+    Required: true
+    Type: String
+    Description:
+      en: The type of the service source.
+    AllowedValues:
+      - DNS
