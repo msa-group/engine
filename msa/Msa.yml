@@ -1,13 +1,12 @@
 Composer:
   Backend:
     Component: fc3
-    Properties:
+    Parameters:
+      Name: {{Subfix(Parameters.Name)}}
       CustomContainerConfig:
         Fn::Sub:
           - '{"Port": 80,"Image":"registry.${Region}.aliyuncs.com/oss-share/msa:httpbin", "RegistryConfig":{"CertConfig":{"Insecure":false}}}'
           - Region: {{Parameters.Region}}
-    Parameters:
-      Name: {{Subfix(Parameters.Name)}}
   Service:
     DependsOn: Backend
     Component: apig.service
@@ -56,35 +55,35 @@ Composer:
                 Fn::Sub:
                   - '{"pathType":"Prefix","host":"${HOST}","enable":true}'
                   - HOST: {{RosOutputHostName(Backend.HttpTrigger, "UrlIntranet")}}
-        - Name: {{Parameters.Name}}
-          Path:
-            Type: Prefix
-            Value: /
-          Scene: SingleService
-          Services:
-            - ServiceId: {{RosOutput(Service, "ServiceId")}}
-              Protocol: HTTP
-              Weight: 100
-          Plugins:
-            - PluginClassName: key-auth
-              PluginConfig: |
-                consumers:
-                - name: test
-                  issuer: httpbin.org
-                  jwks: |
-                    {
-                      "keys": [
-                        {
-                          "kty": "oct",
-                          "use": "sig",
-                          "k": "6fYeKzXqP2FKV9INaq62tGG5Ypc3hLQZzsao3ULosHGGFuECmnspfcZT6ran3KlKEMvo_eR7eohjzbdmuPe6A3k2CRW3ZEr8LKQtHjlNY-fmjWX6rcyiRX26U3bPfEmrQWmlOVghDaAqPw0AUg0HfjgAGQrXw4iuyxqOI37tNi9jpIxYdOiKjSmUQVJ6rHDeqRT9KL6-dd9BPZ2hvSw_iEqr_R568qPvZv8oz3TQSveeavHFkakFIXfRfhvueeA5uGWD3MzIuY6a81uqFZ1JiMIy__BNIrEVO1oaTSf1J0XxFnqm7NtYtNDS0uX6NVVRZ-EGquAM8lg6xwNPDfeBjA",
-                          "alg": "HS256"
-                        }
-                      ]
-                    }
-          Policies:
-            - PolicyClassName: "HttpRewrite"
-              PolicyConfig:
-                Fn::Sub:
-                  - '{"pathType":"Prefix","host":"${HOST}","enable":true}'
-                  - HOST: {{RosOutputHostName(Backend.HttpTrigger, "UrlIntranet")}}
+        # - Name: {{Parameters.Name}}
+        #   Path:
+        #     Type: Prefix
+        #     Value: /
+        #   Scene: SingleService
+        #   Services:
+        #     - ServiceId: {{RosOutput(Service, "ServiceId")}}
+        #       Protocol: HTTP
+        #       Weight: 100
+        #   # Plugins:
+        #   #   - PluginClassName: key-auth
+        #   #     PluginConfig: |
+        #   #       consumers:
+        #   #       - name: test
+        #   #         issuer: httpbin.org
+        #   #         jwks: |
+        #   #           {
+        #   #             "keys": [
+        #   #               {
+        #   #                 "kty": "oct",
+        #   #                 "use": "sig",
+        #   #                 "k": "6fYeKzXqP2FKV9INaq62tGG5Ypc3hLQZzsao3ULosHGGFuECmnspfcZT6ran3KlKEMvo_eR7eohjzbdmuPe6A3k2CRW3ZEr8LKQtHjlNY-fmjWX6rcyiRX26U3bPfEmrQWmlOVghDaAqPw0AUg0HfjgAGQrXw4iuyxqOI37tNi9jpIxYdOiKjSmUQVJ6rHDeqRT9KL6-dd9BPZ2hvSw_iEqr_R568qPvZv8oz3TQSveeavHFkakFIXfRfhvueeA5uGWD3MzIuY6a81uqFZ1JiMIy__BNIrEVO1oaTSf1J0XxFnqm7NtYtNDS0uX6NVVRZ-EGquAM8lg6xwNPDfeBjA",
+        #   #                 "alg": "HS256"
+        #   #               }
+        #   #             ]
+        #   #           }
+        #   Policies:
+        #     - PolicyClassName: "HttpRewrite"
+        #       PolicyConfig:
+        #         Fn::Sub:
+        #           - '{"pathType":"Prefix","host":"${HOST}","enable":true}'
+        #           - HOST: {{RosOutputHostName(Backend.HttpTrigger, "UrlIntranet")}}

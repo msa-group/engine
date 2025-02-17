@@ -6,7 +6,7 @@ Function:
     Description: {{Parameters.Description}}
     FunctionName: {{Parameters.Name}}
     MemorySize: {{Parameters.Memory || 1024}}
-    DiskSize: {{Parameters.Name || 512}}
+    DiskSize: {{Parameters.DiskSize || 512}}
     Runtime: {{Parameters.Runtime || "custom-container"}}
     Cpu: {{Parameters.Cpu || 1}}
     InternetAccess: {{Parameters.InternetAccess || true}}

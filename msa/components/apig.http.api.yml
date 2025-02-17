@@ -5,6 +5,9 @@ HttpApi:
   Properties:
     HttpApiName: {{Parameters.Name}}
     Type: Http
+    BasePath: {{Default(Parameters.BasePath, '/')}}
+    Protocols: '["HTTP", "HTTPS"]'
+
 
 {{#each Default(Parameters.Routes, [])}}
 # 路由配置

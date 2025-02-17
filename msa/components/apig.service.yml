@@ -4,16 +4,19 @@ Service:
   Properties:
     GatewayId: {{Parameters.GatewayId}}
     ServiceName: {{Parameters.Name}}
-    SourceType: Default(item.SourceType, 'DNS')
-{{#if eq(Parameters.SourceType, 'DNS')}}
+    SourceType: {{Default(Parameters.SourceType, 'DNS')}}
+{{#if or(eq(Parameters.SourceType, 'DNS'), eq(Parameters.SourceType, undefined))}}
     Addresses:
       Fn::Sub:
         - '["${AddressesName}:${Port}"]'
         - AddressesName: {{Parameters.DnsConfig.AddressesName}}
-          Port: {{Parameters.DnsConfig.Port}}
+          Port: {{Default(Parameters.DnsConfig.Port, 80)}}
 {{/if}}
+
+{{#if or(Parameters.ServiceConfigs, false)}}
     ServiceConfigs: {{Parameters.ServiceConfigs}}
-    
+{{/if}}
+
 {{#if or(eq(Parameters.DnsConfig.Port, 443), eq(Parameters.DnsConfig.Port, 465))}}
 ServiceTlsPolicy:
   Type: ALIYUN::APIG::Policy
