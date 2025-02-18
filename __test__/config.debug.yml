@@ -1,6 +1,5 @@
 Parameters: 
   Region: 'cn-hangzhou'
-  Scence: 'key-auth-plugin'
   GatewayId: gw-cunbie6m1hkohjeuilrg
   EnvironmentId: env-cunbj26m1hkjrjddmljg
   Name: 'key-auth-plugin'
