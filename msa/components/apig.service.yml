@@ -38,7 +38,7 @@ ServiceTlsPolicy:
 {{/if}}
 
 # 判断 Parameters.DnsConfig.AddressesName 存在
-{{#if Default(Parameters.IsOSSWebsite, false)}}
+{{#if Default(IsOSSWebsite(Parameters.DnsConfig.AddressesName), false)}}
 OSSWebsite:
   Type: ALIYUN::OSS::Website
   Properties:

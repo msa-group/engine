@@ -97,6 +97,14 @@ export const getUtilsHelper = () => {
 
     OSSAddress: (ossName: string, region: string, type = "internal") => {
       return `${ossName}.${Utils.Join(["oss", region, type].filter(Boolean), "-")}.aliyuncs.com`
+    },
+
+    IsOSSWebsite: (address: string) => {
+      if (typeof address !== 'string') {
+        return false;
+      }
+      const matched = /oss-.+\.(aliyuncs.com)$/.test(address);
+      return matched;
     }
 
   }

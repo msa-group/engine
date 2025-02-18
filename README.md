@@ -214,6 +214,13 @@ HttpTrigger:
 * `type` **{string}** 默认值为 `internal`
 * `returns` **{string}**: 返回值，返回 OSS 地址
 
+### [{{IsOSSWebsite}}](buildin/utils.ts)
+判断是否为 OSS 网站
+**参数**：`address`
+
+* `address` **{string}**
+* `returns` **{boolean}**: 返回值，返回是否为 OSS 网站
+
 ## ros
 
 ### [{{RosOutput}}](buildin/ros.ts)
