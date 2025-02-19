@@ -1,100 +1,75 @@
 import { get } from "lodash";
-import { toNotEmptyArray } from "./utils";
 import { findKeyBy } from "./utils";
 import type { EngineContext } from "./types";
-import jsYaml from "js-yaml";
+import { specMapping } from "./buildin-spec/mapping";
 
 class ParseEngine {
   private context: EngineContext;
-  private nameMapping: Record<string, Record<string, string | boolean>> = {};
 
-  constructor(context: EngineContext, nameMapping: Record<string, Record<string, string | boolean>> = {}) {
+  constructor(context: EngineContext) {
     this.context = context;
-    this.nameMapping = nameMapping;
   }
 
   create() {
     return this.context.resultYamlString;
   }
 
-  getRoutesStruct() {
+  getArchitecture() {
     const composer = this.context.templateJson.main.Composer as Record<string, any>;
-    let apiRoutes = [];
-    const fullJson = jsYaml.load(this.context.resultYamlString).Resources as Record<string, any>;
-    let api = { Name: "", Type: "", BasePath: "" };
-    for (const [_, value] of Object.entries(fullJson)) {
-      if (value.Type === "ALIYUN::APIG::HttpApi") {
-        api.Name = value.Properties.HttpApiName;
-        api.Type = value.Properties.Type;
-        api.BasePath = value.Properties.BasePath || "/";
-      }
-    }
+    const res: any = {}
     for (const [key, value] of Object.entries(composer)) {
-      const routes = value?.Parameters?.Routes;
 
-      if (routes) {
-        const name = get(this.nameMapping[key], 'HttpApi', '') as string;
-        const httpApiComponent = get(this.context.templateJson.dependencies[value.Component], `${name}`, {})
-        apiRoutes = routes.map(route => {
-          const item = {
-            Name: route.Name,
-            Path: route.Path,
-            Scene: route.Sence,
-            Type: httpApiComponent.Properties.Type,
-            Services: toNotEmptyArray(route.Services).map(item => {
-              const tempName = get(item, 'ServiceId.Fn::GetAtt', [])[0];
-              const serviceComponent = fullJson[tempName];
+      const Component = value.Component;
+      const type = specMapping[Component];
+      if (type === 'gateway') {
+        const routes = get(value, 'Parameters.Routes', []);
 
-              const sourceType: string = get(serviceComponent, 'Properties.SourceType', '');
-              let backend = {};
-
-              if (sourceType === "DNS") {
-                const addresses = get(serviceComponent, "Properties.Addresses.Fn::Sub", []);
-                let address = "";
-                let componentName = "";
-                const isAddressesUrl = addresses.some(item => {
-                  address = item.AddressesName;
-                  return typeof item.AddressesName === "string"
-                });
-                if (!isAddressesUrl) {
-                  let name = "";
-                  findKeyBy(addresses, 'Fn::GetAtt', (obj, key) => {
-                    name = get(obj[key], '0', '');
-                  });
-                  const component = fullJson[name];
-                  if (component?.Type?.includes("FC3")) {
-                    componentName = 'fc3';
-                  }
-                }
-                backend = isAddressesUrl ? {
-                  Type: "Url",
-                  Url: address,
-                } : {
-                  Type: componentName
-                };
-              }
-              return {
-                Protocol: item.Protocol,
-                Weight: item.Weight,
-                Type: sourceType,
-                Backend: backend,
-              }
-            })
+        const routesWithService = routes.map(route => {
+          const services = get(route, 'Services', []).map((serivce) => {
+            const serviceName = get(serivce, 'ServiceId.Fn::GetAtt', [])[0];
+            const composerName = this.context.fullComponent[serviceName].composerName;
+            return {
+              ...serivce,
+              Ref: composerName
+            }
+          })
+          return {
+            ...route,
+            Services: services,
           }
-          return item
         });
-
-        break;
+        
+        res[key] = {
+          ...value,
+          Parameters: {
+            ...value.Parameters,
+            Routes: routesWithService,
+          }
+        }
+      } else if (type === "service") {
+        let address: any;
+        let backend = "";
+        findKeyBy(value, 'AddressesName', (obj, key) => {
+          address = obj[key];
+        });
+        findKeyBy(address, 'Fn::GetAtt', (obj, key) => {
+          if (obj[key]?.[0]) {
+            backend = obj[key][0];
+          }
+        });
+        const backendComponent = get(this.context.fullComponent, backend, {});
+        res[key] = {
+          ...value,
+          Ref: backendComponent.composerName
+        }
+      } else if (type === 'backend') {
+        res[key] = {
+          ...value,
+        }
       }
     }
 
-    // 目前仅取一个
-    // const api = apis_mut.values().next().value;
-
-    return {
-      Routes: apiRoutes,
-      Api: api,
-    }
+    return res;
   }
 }
 

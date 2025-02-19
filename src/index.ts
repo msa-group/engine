@@ -39,6 +39,7 @@ class Engine {
     this.deletedMergedName = new Set();
     this.mergedNames = new Set();
     this.context = {
+      fullComponent: {},
       templateText: {
         // 主模板 Composer 的内容
         main: "",
@@ -76,7 +77,7 @@ Resources:`,
       try {
         await this.#parserNameMapping(str, { parameters });
         this.#parserMainYaml(str, { parameters });
-        const parseEngine = new ParseEngine(this.context, this.nameMapping);
+        const parseEngine = new ParseEngine(this.context);
         resolve(parseEngine);
         // console.log()
         // resolve(this.context.resultYamlString)
@@ -275,13 +276,13 @@ Resources:`,
         mergedNames: self.mergedNames,
       }
       const componentInstance = new Component(data);
+      this.context.fullComponent[componentInstance.mergedName] = componentInstance;
       h = h + componentInstance.toYaml()[componentInstance.mergedName]
     }
     r = h;
 
     const k = jsYaml.load(r);
     this.context.templateJson.dependencies[composerInstance.componentName] = k;
-
     const g = jsYaml.dump(k);
 
     const indentedYamlText = g
@@ -359,7 +360,6 @@ Resources:`,
   }
 
   getSpecs(str: string) {
-    if (!isEmpty(this.specs)) return this.specs;
     let preparedText = str;
     for (const rule of this.rules.preparsRules) {
       preparedText = rule.replace(preparedText);

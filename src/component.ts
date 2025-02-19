@@ -20,9 +20,11 @@ class Component {
   operation: Record<string, any>;
   isResource: boolean;
   componentName: string;
+  composerName: string;
   constructor(data) {
     const json = data.json || {};
     this.name = data.name;
+    this.composerName = data.parent.name;
     this.mergedName = mergeName(data.parent.name, this.name);
     this.props = { ...(json.Properties || {}), ...data.props };
     this.parameters = {

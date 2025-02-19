@@ -22,9 +22,9 @@ fetch("https://api.devsapp.cn/v3/packages/static-website-oss/release/latest?pack
     Parameters: {},
    }).then((parseEngine) => {
     const rosYAML = parseEngine.create();
-    const routesStruct = parseEngine.getRoutesStruct();
-      console.log('rosYAML', rosYAML);
-      console.log('routesStruct', routesStruct);
+    const Architecture = parseEngine.getArchitecture();
+      console.log('rosYAML: ', rosYAML);
+      console.log('Architecture: ', Architecture);
     }).catch(err => {
       console.error(err);
     });

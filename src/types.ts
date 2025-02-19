@@ -5,6 +5,7 @@ export interface IGlobalDefaultParameters {
 
 
 export interface EngineContext {
+  fullComponent: Record<string, any>;
   templateText: {
     main: string;
     dependencies: Record<string, string>;
