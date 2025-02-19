@@ -112,6 +112,7 @@ Parameters:
     Default: Null
     Required: false
     Type: String
+    AssociationProperty: ALIYUN::ECS::RAM::Role
     Description:
       en: The user is authorized to the RAM role of Function Compute. After setting, Function Compute will assume the role and generate temporary access credentials. The temporary access credentials of this role can be used in functions to access specified Alibaba Cloud services, such as OSS and OTS.
     Label:
