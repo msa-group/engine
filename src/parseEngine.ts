@@ -5,9 +5,11 @@ import { specMapping } from "./buildin-spec/mapping";
 
 class ParseEngine {
   private context: EngineContext;
+  private nameMapping: Record<string, Record<string, string | boolean>> = {};
 
-  constructor(context: EngineContext) {
+  constructor(context: EngineContext, nameMapping: Record<string, Record<string, string | boolean>> = {}) {
     this.context = context;
+    this.nameMapping = nameMapping;
   }
 
   create() {
@@ -23,7 +25,8 @@ class ParseEngine {
       const type = specMapping[Component];
       if (type === 'gateway') {
         const routes = get(value, 'Parameters.Routes', []);
-
+        const resourceName = get(this.nameMapping[key], '__resource__', "") as string;
+        const resource = this.context.fullComponent[resourceName];
         const routesWithService = routes.map(route => {
           const services = get(route, 'Services', []).map((serivce) => {
             const serviceName = get(serivce, 'ServiceId.Fn::GetAtt', [])[0];
@@ -36,6 +39,7 @@ class ParseEngine {
           return {
             ...route,
             Services: services,
+            BasePath: get(resource, 'props.BasePath', '')
           }
         });
         

@@ -135,6 +135,14 @@ HttpTrigger:
 
 ## utils
 
+### [{{Get}}](buildin/utils.ts)
+获取对象的属性, 参考 lodash.get
+**参数**：`data`、`key`、`defaultValue`
+
+* `data` **{unknown}**
+* `key` **{string}**
+* `defaultValue` **{unknown}**
+
 ### [{{IsTls}}](buildin/utils.ts)
 判断是否为 Https， 参数有可能为 Object
 **注**：如果参数为 Object，则需要将 Object 转换为 JSON 字符串后判断是否包含 `:443` 或 `:80`

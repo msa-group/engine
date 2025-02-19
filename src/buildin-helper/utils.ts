@@ -1,4 +1,4 @@
-import { isEmpty } from "lodash";
+import { isEmpty, get } from "lodash";
 import { randomStringOrNumber } from "../utils";
 import log from "../log";
 
@@ -6,6 +6,9 @@ import log from "../log";
 export const getUtilsHelper = () => {
   let suffix = '';
   const Utils = {
+    Get: (data, key, defaultValue) => {
+      return get(data, key, defaultValue);
+    },
     /**
      * 判断是否为 Https， 参数有可能为 Object
      * @param url

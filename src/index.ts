@@ -4,7 +4,7 @@ import { get, isEmpty } from "lodash";
 import { pipe } from "lodash/fp";
 import ParseEngine from "./parseEngine";
 import ParserRules, { addContextPrefix } from "./parserRules";
-import { mergeName, removeNullValues, sortByDependsOn } from "./utils";
+import { getOuterEachBlockPosition, mergeName, removeNullValues, removeOuterEachBlock, sortByDependsOn } from "./utils";
 import { getBuildInHelper } from './buildin-helper';
 // import log from "./log";
 import Composer from "./composer";
@@ -77,7 +77,7 @@ Resources:`,
       try {
         await this.#parserNameMapping(str, { parameters });
         this.#parserMainYaml(str, { parameters });
-        const parseEngine = new ParseEngine(this.context);
+        const parseEngine = new ParseEngine(this.context, this.nameMapping);
         resolve(parseEngine);
         // console.log()
         // resolve(this.context.resultYamlString)
@@ -164,20 +164,12 @@ Resources:`,
       return positions.length > 0;
     }
     function parseEach(text, context, depth = 0) {
-      // console.log(context.item, 'asd...')
       const positions = getOuterEachBlockPosition(text);
       let t = '';
       if (positions.length) {
         for (let i = positions.length - 1; i >= 0; i--) {
           const pos = positions[i];
           const eachBlock = text.slice(pos.start, pos.end) as string;
-          // if (depth === 0) {
-          //   const otherStartContent = text.slice(0, pos.start);
-          //   const prev = positions[i - 1] ? positions[i-1].end : text.length;
-          //   // console.log(prev)
-          //   const otherEndContent = text.slice(pos.end, prev)
-          //   console.log(otherStartContent, otherEndContent)
-          // }
           const lines = eachBlock.split('\n');
           const startEach = lines[0];
           const content = lines.slice(1, lines.length - 1).join('\n');
@@ -205,32 +197,9 @@ Resources:`,
               const f = self.rules.rule.D.replace(e);
               const g = removeOuterEachBlock(f);
               const h = self.rules.rule.parseDoubleCurliesAndEvalCall.replace(g, contextData, undefined, self.nameMapping, true);
-              // console.log(g)
-              // const h = removeOuterEachBlock(g);
-              // const h = self.rules.preparsRules[0].replace(g);
               const fjson = jsYaml.load(h);
               const removedNullValues = removeNullValues(fjson);
               for (const [key, value] of Object.entries(removedNullValues)) {
-                // const name = self.rules.rule.parseDoubleCurliesAndEvalCall.replace(key, contextData);
-                // // console.log(name, key, 'zxc...')
-                // self.nameMapping[composerInstance.name][name] = `${composerInstance.name}${name}`
-                // const data = {
-                //   name,
-                //   parent: composerInstance,
-                //   json: value,
-                //   parameters: composerInstance.parameters,
-                //   props: {},
-                //   dependsOn: [],
-                //   localJson: {},
-                //   nameMapping: self.nameMapping,
-                //   deletedMergedName: self.deletedMergedName,
-                //   mergedNames: self.mergedNames,
-                // }
-                // const component = new Component(data);
-                // console.log()
-                // t = t + component.toYaml()[component.mergedName];
-                // const [i, isEach] = parseEach(content, context);
-                // t = t + component.toYaml()[component.mergedName];
                 t = t + jsYaml.dump({ [key]: value });
               }
               let i = hasEachBlock(content);
@@ -384,48 +353,6 @@ Resources:`,
     };
   }
 
-}
-
-function removeOuterEachBlock(template: string) {
-  let t = template;
-  const positions = getOuterEachBlockPosition(template);
-  if (positions.length) {
-    for (let i = positions.length - 1; i >= 0; i--) {
-      const pos = positions[i];
-      t = t.substring(0, pos.start) + t.substring(pos.end)
-    }
-  }
-
-  return t;
-}
-
-
-function getOuterEachBlockPosition(input: string) {
-  const result = [];
-  const startTag = "{{#each ";
-  const endTag = "{{/each}}";
-
-  let level = 0;
-  let blockStart = null;
-
-  for (let i = 0; i < input.length; i++) {
-    if (input.startsWith(startTag, i)) {
-      if (level === 0) {
-        blockStart = i;
-      }
-      level++;
-      i += startTag.length - 1; // 跳过已匹配的部分
-    } else if (input.startsWith(endTag, i)) {
-      level--;
-      if (level === 0 && blockStart !== null) {
-        result.push({ start: blockStart, end: i + endTag.length });
-        blockStart = null; // 重置开始位置
-      }
-      i += endTag.length - 1; // 跳过已匹配的部分
-    }
-  }
-
-  return result;
 }
 
 

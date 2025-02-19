@@ -216,3 +216,47 @@ export function removeNullValues(obj: Record<string, any>) {
   }
   return obj;
 }
+
+
+export function removeOuterEachBlock(template: string) {
+  let t = template;
+  const positions = getOuterEachBlockPosition(template);
+  if (positions.length) {
+    for (let i = positions.length - 1; i >= 0; i--) {
+      const pos = positions[i];
+      t = t.substring(0, pos.start) + t.substring(pos.end)
+    }
+  }
+
+  return t;
+}
+
+
+export function getOuterEachBlockPosition(input: string) {
+  const result = [];
+  const startTag = "{{#each ";
+  const endTag = "{{/each}}";
+
+  let level = 0;
+  let blockStart = null;
+
+  for (let i = 0; i < input.length; i++) {
+    if (input.startsWith(startTag, i)) {
+      if (level === 0) {
+        blockStart = i;
+      }
+      level++;
+      i += startTag.length - 1; // 跳过已匹配的部分
+    } else if (input.startsWith(endTag, i)) {
+      level--;
+      if (level === 0 && blockStart !== null) {
+        result.push({ start: blockStart, end: i + endTag.length });
+        blockStart = null; // 重置开始位置
+      }
+      i += endTag.length - 1; // 跳过已匹配的部分
+    }
+  }
+
+  return result;
+}
+
