@@ -1,12 +1,11 @@
 import jsYaml from "js-yaml";
 import Handlebars from "handlebars";
-import { get, isEmpty } from "lodash";
+import { get } from "lodash";
 import { pipe } from "lodash/fp";
 import ParseEngine from "./parseEngine";
 import ParserRules, { addContextPrefix } from "./parserRules";
 import { getOuterEachBlockPosition, mergeName, removeNullValues, removeOuterEachBlock, sortByDependsOn } from "./utils";
 import { getBuildInHelper } from './buildin-helper';
-// import log from "./log";
 import Composer from "./composer";
 import Component from "./component";
 import buildinComponents from './buildin-components';
@@ -27,6 +26,7 @@ class Engine {
   private nameMapping: Record<string, Record<string, string | boolean>> = {};
   private deletedMergedName: Set<string> = new Set();
   private mergedNames: Set<string> = new Set();
+  // @ts-ignore
   private specs: Record<string, { spec: string, type: string }> = {};
 
   constructor() {
@@ -73,7 +73,7 @@ Resources:`,
     this.init();
     const buildinHelpersInst = getBuildInHelper();
     this.buildinHelpers = { ...buildinHelpersInst, ...this.registeredHelper }
-    return new Promise(async (resolve, reject) => {
+    return new Promise(async (resolve) => {
       try {
         await this.#parserNameMapping(str, { parameters });
         this.#parserMainYaml(str, { parameters });

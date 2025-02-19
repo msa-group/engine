@@ -9,12 +9,12 @@ Service:
     Addresses:
       Fn::Sub:
         - '["${AddressesName}:${Port}"]'
-        - AddressesName: {{Parameters.DnsConfig.AddressesName}}
-          Port: {{Default(Parameters.DnsConfig.Port, 80)}}
+        - AddressesName: {{Get(Parameters, "DnsConfig.AddressesName")}}
+          Port: {{Default(Get(Parameters, "DnsConfig.Port"), 80)}}
 {{/if}}
     ServiceConfigs: {{Parameters.ServiceConfigs}}
 
-{{#if or(eq(Parameters.DnsConfig.Port, 443), eq(Parameters.DnsConfig.Port, 465))}}
+{{#if or(eq(Get(Parameters, "DnsConfig.Port"), 443), eq(Get(Parameters, "DnsConfig.Port"), 465))}}
 ServiceTlsPolicy:
   Type: ALIYUN::APIG::Policy
   DependsOn:
@@ -32,13 +32,13 @@ ServiceTlsPolicy:
     PolicyConfig:
       Fn::Sub:
         - '{"mode":"SIMPLE","sni":"${HOST}","enable":true}'
-        - HOST: {{Parameters.DnsConfig.AddressesName}}
+        - HOST: {{Get(Parameters, "DnsConfig.AddressesName")}}
     GatewayId: {{Parameters.GatewayId}}
     AttachResourceType: "GatewayService"
 {{/if}}
 
 # 判断 Parameters.DnsConfig.AddressesName 存在
-{{#if Default(IsOSSWebsite(Parameters.DnsConfig.AddressesName), false)}}
+{{#if Default(IsOSSWebsite(Get(Parameters, "DnsConfig.AddressesName")), false)}}
 OSSWebsite:
   Type: ALIYUN::OSS::Website
   Properties:
