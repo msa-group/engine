@@ -64,7 +64,7 @@ PluginAttachmentToRoute{{Join([item.parent.index, index])}}:
   Type: ALIYUN::APIG::PluginAttachment
   Properties:
     EnvironmentId: {{Parameters.EnvironmentId}}
-    AttachResourceIds: {{RosArray(RosOutput(Join(["Route", index]), "RouteId"))}}
+    AttachResourceIds: {{RosArray(RosOutput(Join(["Route", item.parent.index]), "RouteId"))}}
     Enable: true
     PluginInfo:
       GatewayId: {{Parameters.GatewayId}}
