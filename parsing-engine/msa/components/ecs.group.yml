@@ -1,0 +1,50 @@
+SecurityGroup:
+  Type: ALIYUN::ECS::SecurityGroup
+  Properties:
+    SecurityGroupIngress:
+      - Priority: 1
+        PortRange: 80/80
+        NicType: internet
+        SourceCidrIp: 0.0.0.0/0
+        IpProtocol: tcp
+    VpcId:  {{Parameters.VpcId}}
+    SecurityGroupName:
+      Ref: ALIYUN::StackName
+
+InstanceGroup:
+  Type: ALIYUN::ECS::InstanceGroup
+  Properties:
+    SystemDiskCategory: cloud_essd
+    VpcId: {{Parameters.VpcId}}
+    InstanceChargeType: PostPaid
+    Password: {{Parameters.InstancePassword}}
+    SecurityGroupId:
+      Fn::GetAtt:
+        - SecurityGroup
+        - SecurityGroupId
+    SystemDiskSize: 200
+    InternetMaxBandwidthOut: 5
+    VSwitchId: {{Parameters.VSwitchId}}
+    IoOptimized: optimized
+    ImageId: m-bp1e27qht70nrda0qtaz
+    InstanceType: 'ecs.u1-c1m2.xlarge'
+    MaxAmount: 1
+
+RunInstallCommand:
+  Type: ALIYUN::ECS::RunCommand
+  Properties:
+    Type: RunShellScript
+    CommandContent:
+      Fn::Sub:
+        - |
+          systemctl start dify
+          sleep 10
+          ARGUS_VERSION=3.5.7 /bin/bash -c "$(curl -sS https://cms-agent-${RegionId}.oss-${RegionId}-internal.aliyuncs.com/Argus/agent_install_ecs-1.7.sh)" >> /root/install_cms_agent.log 2>&1
+        - RegionId:
+            Ref: ALIYUN::Region
+    Sync: true
+    InstanceIds:
+      Fn::GetAtt:
+        - InstanceGroup
+        - InstanceIds
+    Timeout: 3600

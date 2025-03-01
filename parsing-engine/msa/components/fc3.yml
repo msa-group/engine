@@ -1,0 +1,28 @@
+Function:
+  Type: ALIYUN::FC3::Function
+  MsaResource: true
+  Properties:
+    Handler: {{Parameters.Handler}}
+    Description: {{Parameters.Description}}
+    FunctionName: {{Parameters.Name}}
+    MemorySize: {{Parameters.Memory || 1024}}
+    DiskSize: {{Parameters.DiskSize || 512}}
+    Runtime: {{Parameters.Runtime || "custom-container"}}
+    Cpu: {{Parameters.Cpu || 1}}
+    InternetAccess: {{Parameters.InternetAccess || true}}
+    CustomContainerConfig: {{Parameters.CustomContainerConfig}}
+
+HttpTrigger:
+  Type: ALIYUN::FC3::Trigger
+  DependsOn: Function
+  Properties:
+    FunctionName:
+      Fn::GetAtt:
+        - Function
+        - FunctionName
+    TriggerName: {{Parameters.Name || httpTrigger}}
+    TriggerConfig: >-
+      {"authType":"anonymous","methods":["GET","POST","PUT","DELETE"],"disableURLInternet":false}
+    TriggerType: http
+    Qualifier: 'LATEST'
+

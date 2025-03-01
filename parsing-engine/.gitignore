@@ -4,3 +4,4 @@ src/buildin-components/*
 src/buildin-spec/index.js
 package-lock.json
 lib/
+.DS_Store

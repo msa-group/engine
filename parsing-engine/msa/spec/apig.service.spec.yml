@@ -1,0 +1,160 @@
+Parameters:
+  SourceType:
+    Label:
+      zh-cn: 服务来源类型
+      en: SourceType
+    Required: true
+    Default: DNS
+    Type: String
+    Description:
+      en: The type of the service source.
+    AllowedValues:
+      - FC3
+      - SAE_K8S_SERVICE
+      - DNS
+  SaeNamespace:
+    Default: Null
+    Required:
+      Fn::Equals:
+        - ${SourceType}
+        - SAE_K8S_SERVICE
+    Type: String
+    Label:
+      zh-cn: 命名空间
+      en: ServiceName
+    AssociationPropertyMetadata:
+      Visible:
+        Condition:
+          Fn::Or:
+            - Fn::Equals:
+              - ${SourceType}
+              - SAE_K8S_SERVICE
+  SaeServiceName:
+    Default: Null
+    Required:
+      Fn::Equals:
+        - ${SourceType}
+        - SAE_K8S_SERVICE
+    Type: String
+    AssociationProperty: ALIYUN::FC3::Function::FunctionName
+    AssociationPropertyMetadata:
+      RegionId: ${ALIYUN::Region}
+      Visible:
+        Condition:
+          Fn::Or:
+            - Fn::Equals:
+              - ${SourceType}
+              - SAE_K8S_SERVICE
+    Description:
+      en: The name of the service.
+    Label:
+      zh-cn: 服务名
+      en: ServiceName
+  Fc3ServiceName:
+    Default: Null
+    Required:
+      Fn::Equals:
+        - ${SourceType}
+        - FC3
+    Type: String
+    AssociationProperty: ALIYUN::FC3::Function::FunctionName
+    AssociationPropertyMetadata:
+      RegionId: ${ALIYUN::Region}
+      Visible:
+        Condition:
+          Fn::Or:
+            - Fn::Equals:
+              - ${SourceType}
+              - FC3
+    Description:
+      en: The name of the service.
+    Label:
+      zh-cn: 服务名
+      en: ServiceName
+  GroupName:
+    Default: Null
+    Required: false
+    Type: String
+    AssociationPropertyMetadata:
+      Visible:
+        Condition:
+          Fn::Or:
+            - Fn::Equals:
+              - ${SourceType}
+              - MSE_NACOS
+    Description:
+      en: |-
+        The service group name.
+        Required when SourceType is MSE_NACOS.
+  Qualifier:
+    Default: LATEST
+    Required: false
+    Type: String
+    Label:
+      zh-cn: 版本
+      en: Qualifier
+    AssociationPropertyMetadata:
+      Visible:
+        Condition:
+          Fn::Or:
+            - Fn::Equals:
+              - ${SourceType}
+              - FC3
+    Description:
+      en: The function version or alias.
+  Addresses:
+    AssociationPropertyMetadata:
+      Visible:
+        Condition:
+          Fn::Or:
+            - Fn::Equals:
+              - ${SourceType}
+              - DNS
+            - Fn::Equals:
+              - ${SourceType}
+              - OSS
+      Parameter:
+        Default: Null
+        Required: false
+        AssociationProperty: ALIYUN::OSS::Bucket::BucketName
+        AssociationPropertyMetadata:
+          RegionId: ${ALIYUN::Region}
+          Visible:
+            Condition:
+              Fn::Or:
+                - Fn::Equals:
+                  - ${SourceType}
+                  - OSS
+        Type: String
+        Description:
+          en: Service Address.
+    Description:
+      en: Service Address List.
+    MinLength: 0
+    Default: Null
+    Required: true
+    Label:
+      zh-cn: 服务地址
+      en: Addresses
+    MaxLength: 10
+    AssociationProperty: List[Parameter]
+    Type: Json
+
+Conditions:
+  UseSae:
+    Fn::Equals:
+      - Ref: SourceType
+      - SAE_K8S_SERVICE
+
+Locals:
+  ServiceName:
+    Value:
+      Fn::If:
+        - UseSae
+        - Ref: SaeServiceName
+        - Ref: Fc3ServiceName
+
+Outputs:
+  ServiceNameOutput:
+    Value:
+      Ref: ServiceName

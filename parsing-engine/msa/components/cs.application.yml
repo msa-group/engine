@@ -1,0 +1,8 @@
+ClusterApplication:
+  Type: ALIYUN::CS::ClusterApplication
+  Properties:
+    YamlContent: {{Parameters.yamlContent}}
+    ClusterId: {{Parameters.ClusterId}}
+    DefaultNamespace: {{Parameters.Namespace}}
+    ValidationMode: Basic
+    Stage: All

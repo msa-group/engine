@@ -1,0 +1,141 @@
+Parameters:
+  Runtime:
+    Required: true
+    Type: String
+    Description:
+      en: The programming language of the function.
+    Label:
+      zh-cn: 函数的运行时环境
+      en: 
+    Default: custom-container
+    AllowedValues:
+      - custom-container
+      - custom.debian10
+      - custom
+      - nodejs20
+      - nodejs18
+      - nodejs4
+      - python3.10
+      - python3.9
+      - java11
+      - java8
+      - go1
+  FunctionName:
+    Required: true
+    Type: String
+    Description:
+      en: The name of the function.
+    Label:
+      zh-cn: 函数名称
+      en: FunctionName
+  Handler:
+    Required: true
+    Type: String
+    Description:
+      en: The handler of the function.
+    Default: index.handler
+    Label:
+      zh-cn: 函数执行的入口
+      en: Handler
+  Cpu:
+    Description:
+      en: The CPU size of the function in vCPU as a multiple of 0.05 vCPU. The minimum value is 0.05 and the maximum value is 16. At the same time, the ratio of cpu to memorySize (in GB) should be between 1:1 and 1:4.
+    Default: 1
+    Required: false
+    MaxValue: 16
+    Label:
+      zh-cn: 函数的 CPU 规格
+      en: Cpu
+    MinValue: 0.05
+    Type: Number
+  MemorySize:
+    Description:
+      en: The memory size of the function, in MB.
+    Required: false
+    Default: 1024
+    MaxValue: 65536
+    Label:
+      zh-cn: 函数的内存规格
+      en: MemorySize
+    MinValue: 128
+    Type: Number
+  DiskSize:
+    Default: 512
+    Required: false
+    Type: Number
+    Description:
+      en: 'The disk size of the function, in MB. '
+    Label:
+      zh-cn: 函数的磁盘规格
+      en: DiskSize
+  CustomContainerConfig: 
+    Description:
+      en: Custom container configuration. Choose one of Code and CustomContainerConfig.
+    Default: Null
+    Required: false
+    Label:
+      zh-cn: 自定义容器运行时的相关配置
+      en: CustomContainerConfig
+    Type: Json
+  Timeout:
+    Description:
+      en: The timeout of the function.
+    Default: 6
+    Required: false
+    MaxValue: 86400
+    Label:
+      zh-cn: 函数运行的超时时间
+      en: Timeout
+    MinValue: 1
+    Type: Number
+  InstanceConcurrency:
+    Description:
+      en: The maximum number of concurrent instances of the function.
+    Default: 10
+    Required: false
+    MaxValue: 100
+    Label:
+      zh-cn: 实例最大并发度
+      en: InstanceConcurrency
+    MinValue: 1
+    Type: Number
+  EnvironmentVariables:
+    Default: Null
+    Required: false
+    Type: Json
+    Description:
+      en: The environment variables of the function.
+    Label:
+      zh-cn: 函数的环境变量
+      en: EnvironmentVariables
+  Role:
+    Default: Null
+    Required: false
+    Type: String
+    AssociationProperty: ALIYUN::RAM::Role
+    Description:
+      en: The user is authorized to the RAM role of Function Compute. After setting, Function Compute will assume the role and generate temporary access credentials. The temporary access credentials of this role can be used in functions to access specified Alibaba Cloud services, such as OSS and OTS.
+    Label:
+      zh-cn: 用户授权给函数计算的 RAM 角色
+      en: Role
+
+Metadata:
+  'ALIYUN::ROS::Interface':
+    ParameterGroups:
+      - Parameters:
+          - FunctionName
+          - Runtime
+          - Handler
+          - CustomContainerConfig
+          - EnvironmentVariables
+        Label:
+          default: 基本设置
+      - Parameters:
+          - Cpu
+          - MemorySize
+          - DiskSize
+          - Timeout
+          - InstanceConcurrency
+          - Role
+        Label:
+          default: 高级配置

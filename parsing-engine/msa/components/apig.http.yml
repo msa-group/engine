@@ -1,0 +1,83 @@
+# 路由分组
+HttpApi:
+  Type: ALIYUN::APIG::HttpApi
+  MsaResource: true
+  Properties:
+    HttpApiName: {{Parameters.Name}}
+    Type: Http
+    BasePath: {{Default(Parameters.BasePath, '/')}}
+    Protocols: '["HTTP", "HTTPS"]'
+
+
+{{#each Default(Parameters.Routes, [])}}
+# 路由配置
+Route{{index}}:
+  Type: ALIYUN::APIG::Route
+  Properties:
+    HttpApiId: {{RosOutput(HttpApi, "HttpApiId")}}
+    RouteName: {{item.Name}}
+    EnvironmentInfo: '{"EnvironmentId": "{{Parameters.EnvironmentId}}"}'
+    Match: '{"Path": {"Type":"{{item.Path.Type}}", "Value": "{{item.Path.Value}}"}}'
+    Backend: {{RosRouterServices(item.Services, item.Scene)}}
+# 路由发布
+PublishRoute{{index}}:
+  DependsOn:
+    - {{Join(["Route", index])}}
+  Type: ALIYUN::APIG::ApiAttachment
+  Properties:
+    EnvironmentId: {{Parameters.EnvironmentId}}
+    BackendScene: {{item.Scene}}
+    RouteId:
+      Fn::GetAtt:
+      - {{Join(["Route", index])}}
+      - RouteId
+    HttpApiId: {{RosOutput(HttpApi, "HttpApiId")}}
+    ServiceConfigs: '[{"ServiceId":"mockServie","Weight":100}]'
+{{#each Default(item.Policies, [])}}
+Policy{{Join([item.parent.index, index])}}:
+  DependsOn:
+      - {{Join(["Route", item.parent.index])}}
+  Type: ALIYUN::APIG::Policy
+  Properties:
+    GatewayId: {{Parameters.GatewayId}}
+    EnvironmentId: {{Parameters.EnvironmentId}}
+    PolicyClassName: {{item.PolicyClassName}}
+    PolicyConfig: {{item.PolicyConfig}}
+    AttachResourceIds: {{RosArray(RosOutput(Join(["Route", item.parent.index]), "RouteId"))}}
+    AttachResourceType: "GatewayRoute"
+{{/each}}
+{{#each Default(item.Plugins, [])}}
+{{#if or(item.PluginClassId, false)}}
+Plugin{{Join([item.parent.index, index])}}:
+  Type: ALIYUN::APIG::Plugin
+  MsaResource: true
+  Properties:
+    GatewayId: {{Parameters.GatewayId}}
+    PluginClassId: {{item.PluginClassId}}
+{{/if}}
+# 插件绑定到路由
+PluginAttachmentToRoute{{Join([item.parent.index, index])}}:
+  {{#if or(item.PluginClassId, false)}}
+  DependsOn:
+    - {{Join(["Plugin", item.parent.index, index])}}
+  {{/if}}
+  Type: ALIYUN::APIG::PluginAttachment
+  Properties:
+    EnvironmentId: {{Parameters.EnvironmentId}}
+    AttachResourceIds: {{RosArray(RosOutput(Join(["Route", item.parent.index]), "RouteId"))}}
+    Enable: true
+    PluginInfo:
+      GatewayId: {{Parameters.GatewayId}}
+      PluginId:
+        {{#if or(item.PluginClassId, false)}}
+        Fn::GetAtt:
+          - {{Join(["Plugin", item.parent.index, index])}}
+          - PluginId
+        {{else}}
+          {{item.PluginId}}
+        {{/if}}
+      PluginConfig:
+        Fn::Base64Encode: {{item.PluginConfig}}
+    AttachResourceType: {{Default(item.AttachResourceType, "GatewayRoute") }}
+{{/each}}
+{{/each}}

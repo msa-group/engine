@@ -1,0 +1,50 @@
+Service:
+  Type: ALIYUN::APIG::Service
+  MsaResource: true
+  Properties:
+    GatewayId: {{Parameters.GatewayId}}
+    ServiceName: {{Parameters.Name}}
+    SourceType: {{Default(Parameters.SourceType, 'DNS')}}
+{{#if or(eq(Parameters.SourceType, 'DNS'), eq(Parameters.SourceType, undefined))}}
+    Addresses:
+      Fn::Sub:
+        - '["${AddressesName}:${Port}"]'
+        - AddressesName: {{Get(Parameters, "DnsConfig.AddressesName")}}
+          Port: {{Default(Get(Parameters, "DnsConfig.Port"), 80)}}
+{{/if}}
+    ServiceConfigs: {{Parameters.ServiceConfigs}}
+
+{{#if or(eq(Get(Parameters, "DnsConfig.Port"), 443), eq(Get(Parameters, "DnsConfig.Port"), 465))}}
+ServiceTlsPolicy:
+  Type: ALIYUN::APIG::Policy
+  DependsOn:
+    - Service
+  Properties:
+    EnvironmentId: {{Parameters.EnvironmentId}}
+    AttachResourceIds:
+      Fn::Sub:
+        - '["${ResourceId}"]'
+        - ResourceId:
+            Fn::GetAtt:
+            - Service
+            - ServiceId
+    PolicyClassName: "ServiceTls"
+    PolicyConfig:
+      Fn::Sub:
+        - '{"mode":"SIMPLE","sni":"${HOST}","enable":true}'
+        - HOST: {{Get(Parameters, "DnsConfig.AddressesName")}}
+    GatewayId: {{Parameters.GatewayId}}
+    AttachResourceType: "GatewayService"
+{{/if}}
+
+# 判断 Parameters.DnsConfig.AddressesName 存在
+{{#if Default(IsOSSWebsite(Get(Parameters, "DnsConfig.AddressesName")), false)}}
+OSSWebsite:
+  Type: ALIYUN::OSS::Website
+  Properties:
+    BucketName: {{Parameters.OssBucketName}}
+    WebsiteConfiguration:
+      IndexDocument:
+        Suffix: index.html
+        SupportSubDir: 'true'
+{{/if}}
