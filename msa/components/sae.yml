@@ -2,7 +2,6 @@ Namespace:
   Type: ALIYUN::SAE::Namespace
   Properties:
     NamespaceName: {{Default(Parameters.NamespaceName, Parameters.NamespaceId)}}
-    VpcId: {{Parameters.VpcId}}
     NamespaceId: {{Join(Parameters.Region,Parameters.NamespaceId, ":")}}
     NamespaceDescription: {{Parameters.NamespaceDescription}}
 
@@ -11,15 +10,11 @@ SecurityGroup:
   Properties:
     VpcId: {{Parameters.VpcId}}
     SecurityGroupIngress:
-      - PortRange: 80/80
+      - PortRange: {{Join(Parameters.ContainerPort,Parameters.ContainerPort, "/")}}
         Priority: 1
         SourceCidrIp: 0.0.0.0/0
         IpProtocol: tcp
-      - PortRange: 8080/8080
-        Priority: 1
-        SourceCidrIp: 0.0.0.0/0
-        IpProtocol: tcp
-    SecurityGroupName: {{Parameters.AppName}}
+    SecurityGroupName: {{Join('sg',Parameters.AppName, "-")}}
     
 Application:
   Type: ALIYUN::SAE::Application
@@ -27,30 +22,30 @@ Application:
   Properties:
     PackageType: Image
     ImageUrl: {{Parameters.ImageUrl}}
-    Replicas: 1
+    Replicas: {{Default(Parameters.Replicas, 2)}}
     NamespaceId: {{Join(Parameters.Region,Parameters.NamespaceId, ":")}}
     AppName: {{Parameters.AppName}}
-    Memory: 2048
+    Cpu: {{Default(Parameters.Cpu, 1000)}}
+    Memory: {{Default(Parameters.Memory, 2048)}}
     Timezone: Asia/Shanghai
-    Cpu: 1000
     VpcId: {{Parameters.VpcId}}
     VSwitchId: {{Parameters.VSwitchId}}
     SecurityGroupId: 
       Fn::GetAtt:
         - SecurityGroup
         - SecurityGroupId
-    # PvtzDiscoverySvc: 
-    #   Fn::Sub:
-    #     - '{"serviceName":"${ServiceName}","namespaceId":"${NamespaceId}","portAndProtocol":{"80":"TCP"},"enable":true}'
-    #     - Region:
-    #         Ref: ALIYUN::Region
-    #       NamespaceId:
-    #         Ref: SaeNamespace
-    #       ServiceName:
-    #         Fn::Join:
-    #           - "-"
-    #           - - sae-base
-    #             - Fn::Replace:
-    #               - ':': '-'
-    #               - Ref: SaeNamespace
+    PvtzDiscoverySvc: 
+      Fn::Sub:
+        - '{"serviceName":"${ServiceName}","namespaceId":"${NamespaceId}","portAndProtocol":{"80":"TCP"},"enable":true}'
+        - Region:
+            Ref: ALIYUN::Region
+          NamespaceId:
+            Ref: SaeNamespace
+          ServiceName:
+            Fn::Join:
+              - "-"
+              - - sae-base
+                - Fn::Replace:
+                  - ':': '-'
+                  - Ref: SaeNamespace
   
