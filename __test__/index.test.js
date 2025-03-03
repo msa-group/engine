@@ -14,7 +14,7 @@ describe("Engine", () => {
     // engine.getServiceSpec(text);
     const specs = engine.getSpecs(text);
 
-    const firstScenceParameters = debugConfigJson.ScenceConfigs[0].Parameters;
+    const firstScenceParameters = debugConfigJson.SceneProfiles[0].Parameters;
     // console.log(JSON.stringify(firstScenceParameters))
     
 

@@ -121,7 +121,8 @@ Resources:`,
 
   async #parserMainYaml(str, parameters: any) {
     const params = {
-      ...get(parameters, 'Global', {}),
+      ...get(parameters, 'parameters.Global', {}),
+      ...get(parameters, 'parameters.Parameters', {}),
     }
     Object.assign(this.context.data.Parameters, params);
     const composerYaml = this.rules.rule.B.replace(str, { ...this.context.data, ...this.nameMapping }, "Composer", this.nameMapping);
@@ -133,7 +134,7 @@ Resources:`,
         name: composerKey,
         parameters: {
           ...composerContent.Parameters,
-          ...get(parameters, `Parameters.${composerKey}`, {}),
+          ...get(parameters, `parameters.Parameters.${composerKey}`, {}),
         },
         props: composerContent.Properties,
         dependsOn: composerContent.DependsOn,

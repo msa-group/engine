@@ -1,13 +1,23 @@
 import Engine from "../lib/index";
 
-
-// const $root = document.createElement('div');
-
 window.onload = () => {
   init();
 }
 
+function getParamsFromUrl(url, key) {
+  const urlObj = new URL(url);
+  const params = urlObj.searchParams;
+  const paramsObj = {};
+  params.forEach((value, key) => {
+    paramsObj[key] = value;
+  });
+  return paramsObj[key];
+}
+
 function init() {
+
+  const currentScenceProfile = getParamsFromUrl(window.location.href, 'scenceProfile');
+
   const $jsonViewer = document.getElementById('json-viewer');
 
   const $panelTitle = document.querySelectorAll('.panel-title');
@@ -31,32 +41,18 @@ function init() {
     lineNumbers: true,
   });
 
-  async function generate(text) {
+  function generate(text, globalParams, scenceConfig) {
     const engine = new Engine();
-
-
-    engine.registerHelper({
-      Log: (...arg) => {
-        console.log(...arg);
-        return arg;
-      },
-    })
-
-    engine.parse(text).then((parseEngine) => {
-
-      yamlViewer.setValue(parseEngine.create());
-
-      const operationJson = parseEngine.getOperations();
-      $jsonViewer.textContent = JSON.stringify(operationJson, null, 2);
-
-      engine.parse(text).then((parseEngine) => {
-        console.log(parseEngine.create())
-      })
-    }).catch(err => {
-      $errorDialogContent.textContent = err.message;
-      $errorDialog.showModal();
-      console.error(err);
-    });
+    engine.parse(text, { Global: globalParams, Parameters: scenceConfig.Parameters })
+      .then((parseEngine) => {
+        yamlViewer.setValue(parseEngine.create());
+        const routes = parseEngine.getArchitecture();
+        $jsonViewer.textContent = JSON.stringify(routes, null, 2);
+      }).catch(err => {
+        $errorDialogContent.textContent = err.message;
+        $errorDialog.showModal();
+        console.error(err);
+      });
   }
 
   $panelTitle.forEach(($title) => {
@@ -84,25 +80,34 @@ function init() {
 
 
 
-  // 
 
-  fetch("/api/msa?filePath=./msa/Msa.yml").then(res => res.json()).then(({ data }) => {
-    if (data.content) {
-      yamlEditor.setValue(data.content);
-      generate(data.content);
-    }
+  fetch("/api/config").then(res => res.json()).then(({ data }) => {
+    let globalConfig = jsyaml.load(data.debugConfigContent);
+    const scenceProfiles = globalConfig.SceneProfiles;
+
+    const $selectEnv = document.getElementById('select-env');
+    $selectEnv.innerHTML = scenceProfiles.map(item => `<option value="${item.Template}">${item.DisplayName['zh-cn']}</option>`).join('');
+
+    $selectEnv.addEventListener('change', (event) => {
+      const filePath = event.target.value;
+      const url = window.location.pathname;
+      window.history.replaceState({}, '', url + '?scenceProfile=' + filePath);
+      fetch("/api/msa?filePath=" + filePath).then(res => res.json()).then(({ data }) => {
+        if (data.content) {
+          const currentScenceProfile = scenceProfiles.find(item => item.Template === filePath);
+          yamlEditor.setValue(data.content);
+          generate(data.content, globalConfig.Parameters, currentScenceProfile);
+        }
+      });
+    });
+
+    const scenceProfile = currentScenceProfile ? scenceProfiles.find(item => item.Template === currentScenceProfile) : scenceProfiles[0];
+    fetch("/api/msa?filePath=" + scenceProfile.Template).then(res => res.json()).then(({ data }) => {
+      if (data.content) {
+        yamlEditor.setValue(data.content);
+        generate(data.content, globalConfig.Parameters, scenceProfile);
+      }
+    })
   })
-  // fetch("https://api.devsapp.cn/v3/packages/static-website-oss/release/latest?package-name=static-website-oss").then(res => res.json()).then(({ body }) => {
-  //   const { syaml } = body;
-  //   if (syaml) {
-  //     yamlEditor.setValue(syaml);
-  //     generate(syaml);
-  //   }
-  //   console.log(syaml)
-
-  // });
 }
-
-
-
 

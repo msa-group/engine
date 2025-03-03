@@ -1,13 +1,25 @@
 Parameters: 
+  GatewayId: 'gw-cu9g7dem1hkn32ee70bg'
+  EnvironmentId: 'env-cu9g82mm1hkui0vcv5eg'
   Region: 'cn-hangzhou'
-  GatewayId: gw-cunbie6m1hkohjeuilrg
-  EnvironmentId: env-cunbj26m1hkjrjddmljg
-  Name: 'key-auth-plugin'
-ScenceConfigs:
-  - Name: 单机版
-    NameEn: 'Single Service'
-    Url: 'templates/msa.yaml'
+  Name: 'nextchat-web'
+
+SceneMetadata:
+  Name:
+    zh-cn: "AI 网关驱动企业级 ChatGPT-Next-Web"
+    en: "AI Gateway Drives Enterprise-Level ChatGPT-Next-Web"
+  Description:
+    zh-cn: "一键部署您的企业级 ChatGPT 应用，支持多模型适配，AI 安全防护，AI 统计等企业级特性。使得 AI 与网关的集成更加便捷和高效。详情请查看[ChatGPT Next Web 官网](https://github.com/ChatGPTNextWeb/ChatGPT-Next-Web)。"
+    en: "Deploy your enterprise-level ChatGPT application with multi-model adaptation, AI security protection, AI statistics, and other enterprise-level features. This makes the integration of AI and the gateway more convenient and efficient. For more details, please visit the [ChatGPT Next Web official website](https://github.com/ChatGPTNextWeb/ChatGPT-Next-Web)."
+  Logo: 'resources/icons/scene_logo.png'
+
+SceneProfiles:
+  - DisplayName:
+      zh-cn: 单机版
+      en: Single Service
+    Template: "msa/Msa.yml"
     Parameters: 
       Backend:
         Cpu: 1
         Memory: 1024
+        Handler: index.handler
