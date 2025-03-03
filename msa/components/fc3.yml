@@ -11,6 +11,8 @@ Function:
     Cpu: {{Parameters.Cpu || 1}}
     InternetAccess: {{Parameters.InternetAccess || true}}
     CustomContainerConfig: {{Parameters.CustomContainerConfig}}
+    EnvironmentVariables: {{Parameters.EnvironmentVariables}}
+    Timeout: {{Parameters.Timeout || 3}}
 
 HttpTrigger:
   Type: ALIYUN::FC3::Trigger
