@@ -3,6 +3,7 @@ Parameters:
   EnvironmentId: 'env-cu9g82mm1hkui0vcv5eg'
   Region: 'cn-hangzhou'
   Name: 'nextchat-web'
+  VpcId: 'vpc-xxxx'
 
 SceneMetadata:
   Name:
@@ -20,6 +21,5 @@ SceneProfiles:
     Template: "msa/Msa.yml"
     Parameters: 
       Backend:
-        Cpu: 1
-        Memory: 1024
-        Handler: index.handler
+        NamespaceId: xxx
+        NamespaceName: xxx

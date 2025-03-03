@@ -2,7 +2,7 @@ Namespace:
   Type: ALIYUN::SAE::Namespace
   Properties:
     NamespaceName: {{Default(Parameters.NamespaceName, Parameters.NamespaceId)}}
-    NamespaceId: {{Join(Parameters.Region,Parameters.NamespaceId, ":")}}
+    NamespaceId: {{Join([Parameters.Region, ":", Parameters.NamespaceId])}}
     NamespaceDescription: {{Parameters.NamespaceDescription}}
 
 SecurityGroup:
@@ -10,11 +10,11 @@ SecurityGroup:
   Properties:
     VpcId: {{Parameters.VpcId}}
     SecurityGroupIngress:
-      - PortRange: {{Join(Parameters.ContainerPort,Parameters.ContainerPort, "/")}}
+      - PortRange: {{Join([Parameters.ContainerPort, "/",Parameters.ContainerPort])}}
         Priority: 1
         SourceCidrIp: 0.0.0.0/0
         IpProtocol: tcp
-    SecurityGroupName: {{Join('sg',Parameters.AppName, "-")}}
+    SecurityGroupName: {{Join(['sg', "-",Parameters.AppName])}}
     
 Application:
   Type: ALIYUN::SAE::Application
@@ -23,7 +23,7 @@ Application:
     PackageType: Image
     ImageUrl: {{Parameters.ImageUrl}}
     Replicas: {{Default(Parameters.Replicas, 2)}}
-    NamespaceId: {{Join(Parameters.Region,Parameters.NamespaceId, ":")}}
+    NamespaceId: {{Join([Parameters.Region, ":",Parameters.NamespaceId])}}
     AppName: {{Parameters.AppName}}
     Cpu: {{Default(Parameters.Cpu, 1000)}}
     Memory: {{Default(Parameters.Memory, 2048)}}
