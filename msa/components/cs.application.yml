@@ -1,7 +1,48 @@
 ClusterApplication:
   Type: ALIYUN::CS::ClusterApplication
   Properties:
-    YamlContent: {{Parameters.yamlContent}}
+    YamlContent: |
+{{#if Parameters.Namespace}}
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: {{Parameters.Namespace}}
+{{/if}}
+      ---
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: {{Parameters.AppName}}
+        namespace: {{Default(Parameters.Namespace, 'default')}}
+      spec:
+        replicas: {{Default(Parameters.Replicas, 2)}}
+        selector:
+          matchLabels:
+            app: {{Parameters.AppName}}
+        template:
+          metadata:
+            labels:
+              app: {{Parameters.AppName}}
+          spec:
+            containers:
+              - image: {{Parameters.Image}}
+                imagePullPolicy: Always
+                name: {{Parameters.AppName}}
+                resources: {}
+      ---
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: {{Join([Parameters.AppName, "-" ,"svc"])}}
+        namespace: {{Default(Parameters.Namespace, 'default')}}
+      spec:
+        ports:
+          - port: {{Parameters.Port}}
+            protocol: TCP
+            targetPort:  {{Parameters.Port}}
+        selector:
+          app: {{Parameters.AppName}}
+        type: ClusterIP
     ClusterId: {{Parameters.ClusterId}}
     DefaultNamespace: {{Parameters.Namespace}}
     ValidationMode: Basic
