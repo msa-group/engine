@@ -1,71 +1,18 @@
 
 Composer:
-  Backend:
-    Component: fc3
+  CSApplication:
+    Component: cs.application
     Parameters:
-      Name: {{Default(Get(Parameters, 'Backend.BackendName'), Subfix(Parameters.Name))}}
-      CustomContainerConfig:
-        Fn::Sub:
-          - '{"Port": 3000,"Image":"registry.${Region}.aliyuncs.com/oss-share/msa:chatgpt-next-web-v2", "RegistryConfig":{"CertConfig":{"Insecure":false}}}'
-          - Region: {{Parameters.Region}}
-      EnvironmentVariables: '{"CUSTOM_MODELS":"-all,+gpt-3.5-turbo@OpenAI,+gpt-4o@OpenAI,+gpt-4@OpenAI,+gpt-4-turbo@OpenAI,+qwen-max@OpenAI,+qwen-turbo@OpenAI,+qwen-plus@OpenAI", "OPENAI_API_KEY": "unused", "DEFAULT_MODEL":"qwen-max"}'
-      Timeout: 60
-  
-  Service:
-    DependsOn: Backend
-    Component: apig.service
-    Parameters:
-      Name: {{Default(Get(Parameters, 'Service.Name'), Subfix(Parameters.Name))}}
-      DnsConfig:
-        AddressesName: {{RosOutputHostName(Backend.HttpTrigger, "UrlIntranet")}}
-        Port: 80
-
-  LLMSvc:
-    Component: apig.service
-    Parameters:
-      Name: {{Default(Get(Parameters, 'LLMSvc.Name'), Subfix('dashscope-svc'))}}
-      DnsConfig:
-        AddressesName: dashscope.aliyuncs.com
-        Port: 443
-  
-  HttpApi:
-    Component: apig.http
-    Parameters:
-      Name: {{Default(Get(Parameters, 'HttpApi.Name'), Subfix(Join([Parameters.Name, 'http'])))}}
-      Routes:
-        - Name: {{Default(Get(Parameters, 'HttpApi.RouteNames[0]'), 'index')}}
-          Path: 
-            Type: Prefix
-            Value: '/'
-          Scene: SingleService
-          Services:
-            - ServiceId: {{RosOutput(Service, "ServiceId")}}
-              Protocol: HTTP
-              Weight: 100
-          Policies:
-            - PolicyClassName: "HttpRewrite"
-              PolicyConfig:
-                Fn::Sub:
-                  - '{"pathType":"Prefix","host":"${HOST}","enable":true}'
-                  - HOST: {{RosOutputHostName(Backend.HttpTrigger, "UrlIntranet")}}
-        - Name: {{Default(Get(Parameters, 'HttpApi.RouteNames[1]'), 'dashscope')}}
-          Path: 
-            Type: Prefix
-            Value: '/v1'
-          Methods:
-            - POST
-          Scene: SingleService
-          Services:
-            - ServiceId: {{RosOutput(LLMSvc, "ServiceId")}}
-              Protocol: HTTP
-              Weight: 100
-          Plugins:
-            - PluginClassId: pls-cqebrgh4ckt6ppatmprh
-              PluginConfig: |
-                provider:
-                  modelMapping:
-                    '*': qwen-max
-                  type: qwen
-                  apiTokens:
-                    - sk-xxx
-       
+      AppName: {{Default(Get(Parameters, 'CSApplication.AppName'), Subfix(Parameters.Name))}}
+      Image: "registry.{{Parameters.Region}}.aliyuncs.com/oss-share/msa:chatgpt-next-web-v2"
+      ClusterId: c3aa29096159a4345a655965339bbfa7a
+      Port: 3000
+      Deployment:
+        MetadataLabels:
+          msePilotAutoEnable: "off"
+      Service:
+        MetadataLabels:
+          msePilotAutoEnable: "off"
+      Env:
+        - name: MODE
+          value: standalone

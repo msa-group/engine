@@ -108,6 +108,13 @@ export const getUtilsHelper = () => {
       }
       const matched = /oss-.+\.(aliyuncs.com)$/.test(address);
       return matched;
+    },
+
+    Merge: (defaultConfig, customConfig) => {
+      return {
+        ...defaultConfig,
+        ...customConfig,
+      }
     }
 
   }

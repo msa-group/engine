@@ -8,7 +8,8 @@ export interface IParseRule {
 }
 
 export function addContextPrefix(p1: string, nameMapping?: Record<string, Record<string, string | boolean>>) {
-  const innerMatch = /\b(\w+(?:\.\w+)*)\b|"[^"]*"|'[^']*'|\b\d+\b|\b(?:true|false)\b/g
+  // const innerMatch = /\b(\w+(?:\.\w+)*)\b|"[^"]*"|'[^']*'|\b\d+\b|\b(?:true|false)\b/g
+  const innerMatch = /(?<!\{[^}]*)\b(\w+(?:\.\w+)*)\b(?![^{]*\})(?!\s*:)|"[^"]*"|'[^']*'|\b\d+\b|\b(?:true|false)\b/g
   const withContextPrefix = p1.replace(/\\"/g, '"').replace(/''/g, "'").replace(innerMatch, (match, p2) => {
     if (
       match.startsWith('"') && match.endsWith('"') ||
@@ -60,7 +61,8 @@ class ParserRules {
       {
         name: "handlebars",
         replace(str: string) {
-          const match = /{{([^}]+)}}/g;
+          // const match = /{{([^}]+)}}/g;
+          const match = /{{((?:[^{}]|\{(?:[^{}]|\{[^{}]*\})*\})*)}}/g;
           return str.replace(match, (_match, p1) => {
             if (/^(#if|else|\/if)/g.test(p1)) return `{{${p1}}}`;
             return `"#%%${p1.replace(/"/g, '\\"')}%%"`;
@@ -91,8 +93,9 @@ class ParserRules {
                 if (withContextPrefix === "index") {
                   return index;
                 }
+                // @ts-ignore
+                const Parameters = context.Parameters;
                 const res = eval(withContextPrefix);
-                console.log(res, 'asd...')
                 Reflect.deleteProperty(context, 'item');
                 if (typeof res === 'string' && addIndent) {
                   indent = getIndent(str, index);
@@ -156,7 +159,8 @@ class ParserRules {
           const match = /["']#%%([\s\S]*?)%%["']/g;
           let indent = 0;
           const text = str.replace(match, (_match, p1, index) => {
-            const innerMatch = /\b(\w+(?:\.\w+)*)\b|"[^"]*"|'[^']*'|\b\d+\b|\b(?:true|false)\b/g
+            // const innerMatch = /\b(\w+(?:\.\w+)*)\b|"[^"]*"|'[^']*'|\b\d+\b|\b(?:true|false)\b/g
+            const innerMatch = /(?<!\{[^}]*)\b(\w+(?:\.\w+)*)\b(?![^{]*\})(?!\s*:)|"[^"]*"|'[^']*'|\b\d+\b|\b(?:true|false)\b/g
             const t = p1.replace(/\\"/g, '"').replace(/''/g, "'").replace(innerMatch, (match, p2) => {
               if (
                 match.startsWith('"') && match.endsWith('"') ||
@@ -186,6 +190,8 @@ class ParserRules {
               }
               return r;
             });
+            // @ts-ignore
+            const Parameters = context.Parameters;
             const res = eval(t);
             if (res === undefined) {
               log.warn(`${p1} is undefined in ${key}, Please check you Composer`);
@@ -247,6 +253,8 @@ class ParserRules {
             if (needEval === false) {
               return _match;
             }
+            // @ts-ignore
+            const Parameters = context.Parameters;
             const res = eval(t);
             if (res === undefined) {
               log.warn(`${p1} is undefined in ${key}, Please check you Composer`);
@@ -294,6 +302,8 @@ class ParserRules {
               }
               return r;
             });
+            // @ts-ignore
+            const Parameters = context.Parameters;
             const res = eval(t);
             if (res === undefined) {
               log.warn(`${p1} is undefined in ${key}, Please check you Composer`);

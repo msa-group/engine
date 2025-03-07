@@ -7,6 +7,7 @@ ClusterApplication:
       kind: Namespace
       metadata:
         name: {{Parameters.Namespace}}
+        labels: {{Merge(Get(Parameters, "Namespace.MetadataLabels", {}), { app: Parameters.AppName })}}
 {{/if}}
       ---
       apiVersion: apps/v1
@@ -14,6 +15,7 @@ ClusterApplication:
       metadata:
         name: {{Parameters.AppName}}
         namespace: {{Default(Parameters.Namespace, 'default')}}
+        labels: {{Merge(Get(Parameters, "Deployment.MetadataLabels", {}), { app: Parameters.AppName })}}
       spec:
         replicas: {{Default(Parameters.Replicas, 2)}}
         selector:
@@ -21,20 +23,23 @@ ClusterApplication:
             app: {{Parameters.AppName}}
         template:
           metadata:
-            labels:
-              app: {{Parameters.AppName}}
+            labels: {{Merge(Get(Parameters, "Deployment.MetadataLabels", {}), { app: Parameters.AppName })}}
           spec:
             containers:
               - image: {{Parameters.Image}}
                 imagePullPolicy: Always
                 name: {{Parameters.AppName}}
                 resources: {}
+                {{#if Parameters.Env}}
+                env: {{Parameters.Env}}
+                {{/if}}
       ---
       apiVersion: v1
       kind: Service
       metadata:
-        name: {{Join([Parameters.AppName, "-" ,"svc"])}}
+        name: {{Parameters.AppName}}
         namespace: {{Default(Parameters.Namespace, 'default')}}
+        labels: {{Merge(Get(Parameters, "Service.MetadataLabels", {}), { app: Parameters.AppName })}}
       spec:
         ports:
           - port: {{Parameters.Port}}
