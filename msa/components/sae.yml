@@ -1,51 +1,45 @@
+{{#if not(Parameters.NamespaceId)}}
 Namespace:
   Type: ALIYUN::SAE::Namespace
   Properties:
-    NamespaceName: {{Default(Parameters.NamespaceName, Parameters.NamespaceId)}}
-    NamespaceId: {{Join([Parameters.Region, ":", Parameters.NamespaceId])}}
+    NamespaceName: {{ Parameters.NamespaceName }}
+    NamespaceId: {{Join([Parameters.Region, ":", Parameters.NamespaceName])}}
     NamespaceDescription: {{Parameters.NamespaceDescription}}
+{{/if}}
 
 SecurityGroup:
-  Type: 'ALIYUN::ECS::SecurityGroup'
+  Type: ALIYUN::ECS::SecurityGroup
+  DependsOn: 
+    - Vpc
   Properties:
     VpcId: {{Parameters.VpcId}}
     SecurityGroupIngress:
+      {{#each Parameters.Applications}}
       - PortRange: {{Join([Parameters.ContainerPort, "/",Parameters.ContainerPort])}}
         Priority: 1
         SourceCidrIp: 0.0.0.0/0
         IpProtocol: tcp
-    SecurityGroupName: {{Join(['sg', "-",Parameters.AppName])}}
-    
-Application:
-  Type: ALIYUN::SAE::Application
-  DependsOn: Namespace
+      {{/each}}
+    SecurityGroupName: 'sg-ros-autocreate'
+
+{{#each Parameters.Applications}}
+ConfigMap{{index}}:
+  Type: ALIYUN::SAE::ConfigMap
+  DependsOn:
+    - Namespace
   Properties:
-    PackageType: Image
-    ImageUrl: {{Parameters.ImageUrl}}
-    Replicas: {{Default(Parameters.Replicas, 2)}}
-    NamespaceId: {{Join([Parameters.Region, ":",Parameters.NamespaceId])}}
-    AppName: {{Parameters.AppName}}
-    Cpu: {{Default(Parameters.Cpu, 1000)}}
-    Memory: {{Default(Parameters.Memory, 2048)}}
-    Timezone: Asia/Shanghai
-    VpcId: {{Parameters.VpcId}}
-    VSwitchId: {{Parameters.VSwitchId}}
-    SecurityGroupId: 
-      Fn::GetAtt:
-        - SecurityGroup
-        - SecurityGroupId
-    PvtzDiscoverySvc: 
-      Fn::Sub:
-        - '{"serviceName":"${ServiceName}","namespaceId":"${NamespaceId}","portAndProtocol":{"80":"TCP"},"enable":true}'
-        - Region:
-            Ref: ALIYUN::Region
-          NamespaceId:
-            Ref: SaeNamespace
-          ServiceName:
-            Fn::Join:
-              - "-"
-              - - sae-base
-                - Fn::Replace:
-                  - ':': '-'
-                  - Ref: SaeNamespace
+    Name: {{Join(['configmap', "-",item.AppName])}}
+    NamespaceId: 
+      Ref: Namespace
+    Data: {{RosConfig(item.ConfigMapData.Data)}}
+
+Application{{index}}:
+  Type: ALIYUN::SAE::Application
+  DependsOn:
+    - Namespace
+    - ConfigMap{{index}}
+    - SecurityGroup
+    - Vpc
   
+    
+{{/each}}
