@@ -1,6 +1,9 @@
 ClusterApplication:
   Type: ALIYUN::CS::ClusterApplication
   Properties:
+    {{#if Parameters.YamlContent}}
+    YamlContent: {{Parameters.YamlContent}}
+    {{else}}
     YamlContent: |
 {{#if Parameters.Namespace}}
       apiVersion: v1
@@ -15,7 +18,8 @@ ClusterApplication:
       metadata:
         name: {{Parameters.AppName}}
         namespace: {{Default(Parameters.Namespace, 'default')}}
-        labels: {{Merge(Get(Parameters, "Deployment.MetadataLabels", {}), { app: Parameters.AppName })}}
+        labels:
+          app: {{Parameters.AppName}}
       spec:
         replicas: {{Default(Parameters.Replicas, 2)}}
         selector:
@@ -23,7 +27,7 @@ ClusterApplication:
             app: {{Parameters.AppName}}
         template:
           metadata:
-            labels: {{Merge(Get(Parameters, "Deployment.MetadataLabels", {}), { app: Parameters.AppName })}}
+            labels: {{Merge(Get(Parameters, "Deployment.Labels", {}), { app: Parameters.AppName })}}
           spec:
             containers:
               - image: {{Parameters.Image}}
@@ -52,3 +56,4 @@ ClusterApplication:
     DefaultNamespace: {{Parameters.Namespace}}
     ValidationMode: Basic
     Stage: All
+    {{/if}}

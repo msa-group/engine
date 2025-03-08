@@ -1,18 +1,23 @@
 
 Composer:
-  CSApplication:
-    Component: cs.application
+  Backend:
+    Component: sae
     Parameters:
-      AppName: {{Default(Get(Parameters, 'CSApplication.AppName'), Subfix(Parameters.Name))}}
-      Image: "registry.{{Parameters.Region}}.aliyuncs.com/oss-share/msa:chatgpt-next-web-v2"
-      ClusterId: c3aa29096159a4345a655965339bbfa7a
-      Port: 3000
-      Deployment:
-        MetadataLabels:
-          msePilotAutoEnable: "off"
-      Service:
-        MetadataLabels:
-          msePilotAutoEnable: "off"
-      Env:
-        - name: MODE
-          value: standalone
+      Region: cn-hangzhou
+      NamespaceName: ros
+      VpcId: vpc-bp19lfcb7m6zceo7x4wr7
+      VswtichId: vsw-bp1jgvm7m06beroif8a67
+      Name: test_ros
+      ContainerPort: 8080
+      Applications:
+        - ImageUrl: registry.cn-hangzhou.aliyuncs.com/sae-serverless-demo/sae-demo:microservice-java-provider-v1.0
+          AppName: test-ros
+          ContainerPort: 8080/8080
+          ConfigMapData: 
+            Data: 
+              Key: key1
+              Value: value1
+            MountPath: /etc/nginx/nginx.conf
+          Envs:
+            env1: value1
+            env2: value2
